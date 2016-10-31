@@ -1,0 +1,468 @@
+---
+title: "Fantasy Football Team"
+author: "Joshua Peterson"
+date: "9/21/2016"
+output:
+  html_document: default
+  word_document: default
+---
+Player analysis and selection for the week of 09.19.2016
+
+```{r Points, echo=FALSE}
+PassydsPts<- 1/25
+PasstdPts<- 4
+Int<- -2
+RushydsPts<- 1/10
+RushtdPts<- 6
+```
+
+QB Analysis - Pull Player Data
+```{r QB, echo=FALSE}
+CN<- read.csv("Cam Newton.csv")
+CNdf<- as.data.frame(CN)
+```
+
+# QB Analysis
+
+## Cam Newton - Summary Passing Data
+
+Newton Yards Summary
+```{r Newton Passing, echo=FALSE}
+summary(CNdf)
+
+```
+
+## Exploratory data analysis
+
+### Location analysis
+
+```{r}
+par(mfrow = c(5,2), mar = c(4,4,1,1))
+plot(CNdf$Location, CNdf$PassYds, ylab = "Passing Yards", col = "red")
+plot(CNdf$Location, CNdf$RushYds, ylab = "Rushing Yards", col = "blue")
+plot(CNdf$Location, CNdf$PassTD, ylab = "Passing TDs", col = "green")
+plot(CNdf$Location, CNdf$RushTD, ylab = "Rushing TDs", col = "purple")
+plot(CNdf$Location, CNdf$Int, ylab = "Interceptions", col = "grey")
+
+```
+
+### Opponent Analysis
+
+Opponent vs. Pass Yards
+```{r}
+par(mfrow = c(5,1), mar = c(4,4,1,1))
+plot(CNdf$Opp, CNdf$PassYds, ylab = "Yards Passing", xlab = "Opponent", col = "red")
+plot(CNdf$Opp, CNdf$RushYds, ylab = "Yards Rushing", xlab = "Opponent", col = "blue")
+plot(CNdf$Opp, CNdf$PassTD, ylab = "Passing TDs", xlab = "Opponent", col = "green")
+plot(CNdf$Opp, CNdf$RushTD, ylab = "Rushing TDs", xlab = "Opponent", col = "purple")
+plot(CNdf$Opp, CNdf$Int, ylab = "Interceptions", xlab = "Opponent", col = "grey")
+```
+
+### Defensive Ranking Analysis
+
+Defense rank vs. Pass Yards
+```{r}
+library(ggplot2)
+par(mfrow = c(5,2), mar = c(4,4,1,1))
+qplot(Def.Rank.Yds,PassYds, data = CNdf) + geom_smooth(method = "lm")
+qplot(Def.Rank.Yds, RushYds, data = CNdf) + geom_smooth(method = "lm")
+qplot(Def.Rank.Yds, PassTD, data = CNdf) + geom_smooth(method = "lm")
+qplot(Def.Rank.Yds, RushTD, data = CNdf) + geom_smooth(method = "lm")
+qplot(Def.Rank.Yds, Int, data = CNdf) + geom_smooth(method = "lm")
+```
+
+
+
+
+
+
+Newton Yards LSE
+```{r Newton LSE, echo=FALSE}
+par(mfrow = c(3,2), mar = c(4,4,2,1))
+hist(CNdf$PassYds,col="blue",breaks=100, main = "Histogram of Newton Pass Yds/Game",xlab = "Yards/Game")
+hist(CNdf$RushYds,col="red",breaks=100, main = "Histogram of Newton Rush Yds/Game",xlab = "Yards/Game")  
+hist(CNdf$PassTD,col="purple",breaks=100, main = "Histogram of Newton Pass TDs/Game",xlab = "TDs/Game")
+hist(CNdf$RushTD,col="grey",breaks=100, main = "Histogram of Newton Rush TDs/Game",xlab = "TDs/Game")
+hist(CNdf$Int,col="grey",breaks=100, main = "Histogram of Newton Interceptions/Game",xlab = "Interceptions/Game")
+```
+
+
+## Linear model fitting
+
+### Model fitting vs. Location
+
+Pass Yds vs. Location
+```{r, echo=FALSE}
+CNfitPassYdsLoc<- lm(PassYds ~ Location, data = CNdf)
+summary(CNfitPassYdsLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrLoc<- data.frame(Location="Away", data=CNdf)
+LocLmPredictPy<- head(predict(CNfitPassYdsLoc, CurrLoc, interval="predict"))
+LocLmPredictPy
+```
+
+
+
+Rush Yds. vs. Location
+```{r}
+CNfitRushYdsLoc<- lm(RushYds ~ Location, data = CNdf)
+summary(CNfitRushYdsLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrLoc<- data.frame(Location="Away", data=CNdf)
+LocLmPredictRy<- head(predict(CNfitRushYdsLoc, CurrLoc, interval="predict"))
+LocLmPredictRy
+```
+
+Pass TDs. vs. Location
+```{r, echo=FALSE}
+CNfitPassTDLoc<- lm(PassTD ~ Location, data = CNdf)
+summary(CNfitPassTDLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrLoc<- data.frame(Location="Away", data=CNdf)
+LocLmPredictPt<- head(predict(CNfitPassTDLoc, CurrLoc, interval="predict"))
+LocLmPredictPt
+```
+
+Rush TDs vs. Location
+```{r, echo=FALSE}
+CNfitRushTDLoc<- lm(RushTD ~ Location, data = CNdf)
+summary(CNfitRushTDLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrLoc<- data.frame(Location="Away", data=CNdf)
+LocLmPredictRt<- head(predict(CNfitRushTDLoc, CurrLoc, interval="predict"))
+LocLmPredictRt
+```
+
+
+#### Model fitting vs. opponent
+
+Pass Yards vs. opponent data
+```{r}
+CNfitPassYds<- lm(PassYds ~ Opp, data = CNdf)
+summary(CNfitPassYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrOpp<- data.frame(Opp="STL", data=CNdf)
+OppLmPredictPy<- head(predict(CNfitPassYds, CurrOpp, interval="predict"))
+OppLmPredictPy
+```
+
+Rush Yards vs. opponent data
+
+```{r}
+CNfitRushYds<- lm(RushYds ~ Opp, data = CNdf)
+summary(CNfitRushYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrOpp<- data.frame(Opp="STL", data=CNdf)
+OppLmPredictRy<- head(predict(CNfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRy
+```
+
+Pass TDs vs. opponent data
+```{r}
+CNfitPassTD<- lm(PassTD ~ Opp, data = CNdf)
+summary(CNfitPassTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrOpp<- data.frame(Opp="STL", data=CNdf)
+OppLmPredictPt<- head(predict(CNfitPassTD, CurrOpp, interval="predict"))
+OppLmPredictPt
+```
+
+Rush TDs vs. opponent data
+```{r}
+CNfitRushTD<- lm(RushTD ~ Opp, data = CNdf)
+summary(CNfitRushTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrOpp<- data.frame(Opp="STL", data=CNdf)
+OppLmPredictRt<- head(predict(CNfitRushTD, CurrOpp, interval="predict"))
+OppLmPredictRt
+```
+
+Interceptions vs. opponent data
+```{r}
+CNfitInt<- lm(Int ~ Opp, data = CNdf)
+summary(CNfitInt)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrOpp<- data.frame(Opp="STL", data=CNdf)
+OppLmPredictInt<- head(predict(CNfitInt, CurrOpp, interval="predict"))
+OppLmPredictInt
+```
+
+### Model fitting vs. defensive rank
+
+Pass Yards vs. Defensive Rank
+```{r, echo=FALSE}
+CNfitPassYdsRnk<- lm(PassYds ~ Def.Rank.Yds, data = CNdf)
+summary(CNfitPassYdsRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
+RankLmPredictPy<- head(predict(CNfitPassYdsRnk, CurrRank, interval="predict"))
+RankLmPredictPy
+```
+
+Rush Yards vs. Defensive Rank
+```{r, echo=FALSE}
+CNfitRushYdsRnk<- lm(RushYds ~ Def.Rank.Yds, data = CNdf)
+summary(CNfitRushYdsRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
+RankLmPredictRy<- head(predict(CNfitRushYdsRnk, CurrRank, interval="predict"))
+RankLmPredictRy
+```
+
+Pass TDs vs. Defensive Rank
+```{r, echo=FALSE}
+CNfitPassTDRnk<- lm(PassTD ~ Def.Rank.Yds, data = CNdf)
+summary(CNfitPassTDRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
+RankLmPredictPt<- head(predict(CNfitPassTDRnk, CurrRank, interval="predict"))
+RankLmPredictPt
+```
+
+Rush TDs vs. Defensive Rank
+```{r, echo=FALSE}
+CNfitRushTDRnk<- lm(RushTD ~ Def.Rank.Yds, data = CNdf)
+summary(CNfitRushTDRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
+RankLmPredictRt<- head(predict(CNfitRushTDRnk, CurrRank, interval="predict"))
+RankLmPredictRt
+```
+
+Interceptions vs. Defensive Rank
+```{r, echo=FALSE}
+CNfitIntRnk<- lm(Int ~ Def.Rank.Yds, data = CNdf)
+summary(CNfitIntRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
+RankLmPredictInt<- head(predict(CNfitIntRnk, CurrRank, interval="predict"))
+RankLmPredictInt
+```
+
+
+
+
+###Newton Pass Yards Plot of Data Yards against opponents
+```{r, echo=FALSE}
+PYplotOpp<- ggplot(CNdf, aes(x=PassYds, y=Opp))
+PYplotOpp=PYplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+PYplotOpp=PYplotOpp + geom_smooth(method = "lm", colour = "black")
+PYplotOpp
+```
+
+Newton Rush Yards Plot of Data Yards against opponents
+```{r, echo=FALSE}
+RYplotOpp<- ggplot(CNdf, aes(x=RushYds, y=Opp))
+RYplotOpp=RYplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+RYplotOpp=RYplotOpp + geom_smooth(method = "lm", colour = "black")
+RYplotOpp
+```
+
+Newton TDs Plot of Data Yards against opponents
+```{r, echo=FALSE}
+TDplotOpp<- ggplot(CNdf, aes(x=PassTD, y=Opp))
+TDplotOpp=TDplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+TDplotOpp=TDplotOpp + geom_smooth(method = "lm", colour = "black")
+TDplotOpp
+```
+
+
+## Machine Learning Alogorithm (Pass Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE}
+summary(CNdf)
+inTrain <- createDataPartition(y=CNdf$PassYds,p=0.60, list=FALSE)
+training <- CNdf[inTrain,]
+testing <- CNdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+## K-Fold Cross Validation
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r}
+set.seed(32323)
+Passfolds <- createFolds(y=CNdf$PassYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+## Machine learning alogorithm decisioning
+
+First I wanted to determine the optimal machine learning model to use.  The first test I used the Decision Tree approach.  I followed up by testing the Random Forest approach.
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE}
+library(rpart)
+modelFitPass <- rpart(PassYds ~ Def.Rank.Yds, data = CNdf, method = "anova")
+```
+
+Next, construct a Decision Tree graph
+```{r}
+fancyRpartPlot(modelFitPass)
+```
+
+## Machine Learning Alogorithm (Rush Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE}
+summary(CNdf)
+inTrain <- createDataPartition(y=CNdf$RushYds,p=0.60, list=FALSE)
+training <- CNdf[inTrain,]
+testing <- CNdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r}
+set.seed(32323)
+Passfolds <- createFolds(y=CNdf$RushYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+Decision tree model fit Rush Yards Defense Rank.
+```{r, echo=FALSE}
+modelFitRush <- rpart(RushYds ~ Def.Rank.Yds, data = CNdf, method = "anova")
+```
+
+Pass Yards decision tree graph
+```{r}
+fancyRpartPlot(modelFitRush)
+```
+
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE}
+modelFitPass <- rpart(RushYds ~ Def.Rank.Yds, data = CNdf, method = "anova")
+```
+
+### Output from Decision Tree Model vs. Yards Passing
+
+Current week (9) opponent L.A. Rams (formerly St. Louis Rams).  The defense is currently ranked # 10 according to www.pro-football-reference.com.
+
+According to the model, there is a 60% chance that Cam Newton will pass for 240 yards.  This takes in to account defense rank ONLY.  There is an 18.0% chance Cam will rush for 25 yards.  Once again this takes in to account defense rank ONLY.
+
+We will now use the LM model for prediction (Pass Yds)
+```{r, echo=FALSE}
+lmModel<- lm(formula = PassYds ~ Opp+Def.Rank.Yds+Location, data = CNdf)
+currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
+pass_predict_final<- predict(lmModel, currdata)
+pass_predict_final
+```
+
+Predicted passing points
+```{r, echo=FALSE}
+PassPts<-pass_predict_final*PassydsPts
+PassPts
+```
+
+We will now use the LM model for prediction (Rush Yds)
+```{r, echo=FALSE}
+lmModel<- lm(formula = RushYds ~ Opp+Def.Rank.Yds+Location, data = CNdf)
+currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
+rush_predict_final<- predict(lmModel, currdata)
+rush_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE}
+RushPts<-rush_predict_final*RushydsPts
+RushPts
+```
+
+We will now use the LM model for prediction (Pass TDs)
+```{r, echo=FALSE}
+lmModel<- lm(formula = PassTD ~ Opp+Def.Rank.Yds+Location, data = CNdf)
+currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
+passTd_predict_final<- predict(lmModel, currdata)
+passTd_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE}
+TdPassPts<-passTd_predict_final*PasstdPts
+TdPassPts
+```
+
+We will now use the LM model for prediction (Rush TDs)
+```{r, echo=FALSE}
+lmModel<- lm(formula = RushTD ~ Opp+Def.Rank.Yds+Location, data = CNdf)
+currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
+rushTd_predict_final<- predict(lmModel, currdata)
+rushTd_predict_final
+```
+
+Predicted rushing TD points
+```{r, echo=FALSE}
+TdRushPts<-rushTd_predict_final*RushtdPts
+TdRushPts
+```
+
+Total predicted points using linear regression models
+```{r, echo=FALSE}
+CNTotalPer<- PassPts+RushPts+TdPassPts+TdRushPts
+CNTotalPer
+```
+
+Outcome:  Cam Newton's predicted point total for Week 9 against the LA Rams is 13.21 points.  NFL.com is predicting that Cam's point total will be 15.44 points
+
+```{r, echo=FALSE}
+library(knitr)
+knit("QB_ML_Experiment_2016.Rmd")
+```
