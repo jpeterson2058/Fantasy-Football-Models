@@ -1,0 +1,51 @@
+---
+title: "Developing Data Products - Fantasy Football Exploratory Data"
+author: "Joshua Peterson"
+date: "11/09/2016"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Project Objective
+This is the final project for the Coursera course, Developing Data Products.  This project includes
+
+- A shiny app deployed on RStudio
+- A quick presentation describing the app
+
+The link to the app can be found here https://portfoliomanager.shinyapps.io/AndrewLuckPerforman/
+
+##Shiny App Use
+
+- Do you own a fantasy football team?!
+- Are you super competitive?
+- Are you tired of making seemingly "random" decisions
+- Are you tired of hearing constant smack from the rest of your league?
+
+This may be the app for you.  In a quick snapshot you can gain insight in to passing yards based off of predictors such as:
+
+- Opponent defensive rank
+- Opponent
+- Location of the game (home or away), and finally
+
+##Data Variables
+Snapshot summary of the statistics for Andrew Luck, quarterback for the Indianopolis Colts...and one of my top fantasy performers.
+```{r, echo=FALSE, comment="", message=FALSE}
+library(readr)
+AL <- read_csv("Andrew_Luck_2016.csv")
+ALdf<- as.data.frame(AL)
+summary(ALdf)
+```
+
+##Fantasy Football Output Goodness
+An example of the output shown is Luck's passing yards against four predictor variables
+
+```{r, echo=FALSE, comment="", message=FALSE}
+library(plotly)
+plot_ly(ALdf, x= ~Def.Rank.Yds, y= ~PassYds, type = 'box', name = "Pass Yards") %>%
+   layout(yaxis = list(title = "Yards"), barmode = "group")
+```
+
+

@@ -1,0 +1,41 @@
+---
+title: "Cam Newton Passing Yards Analysis"
+author: "Joshua Peterson"
+date: "11/2/2016"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Fantasy Football Prediciton - the road to victory!
+
+This is part of a project that I'm working on to construct a model to determine which player to use for any given week based off of a set of predictors.
+
+I analyzed three predictors when determining the performance and the ultimate point performance of my current player, Cam Newton.
+
+- Opposing team defensive rank
+- Location of game
+- Team Played
+
+## Data
+
+```{r, comment=""}
+CN<- read.csv("Cam Newton.csv")
+CNdf<- as.data.frame(CN)
+summary(CNdf)
+```
+
+## Passing Yards vs. Defense Rank
+
+```{r, comment= "", echo=FALSE, fig.align='center', message=FALSE}
+library(knitr)
+library(ggplot2)
+library(plotly)
+plot1<- qplot(Def.Rank.Yds,PassYds, data = CNdf) + geom_smooth(method = "lm")
+(gg<- ggplotly(plot1))
+```
+
+
+

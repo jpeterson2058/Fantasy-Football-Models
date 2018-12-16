@@ -1,0 +1,25 @@
+---
+title: "Peterson - Project II"
+author: "Joshua Peterson"
+date: "11/2/2016"
+output: html_document
+---
+
+This is part of a project that I'm working on to construct a model to determine which player to use for any given week based off of a set of predictors.
+
+The following graph plots defensive rank vs. passing yards for Cam Newton from 2011 to current.  I used defensive rank for this excercise as it has been the best predictor thus far.
+
+QB Analysis - Pull Player Data
+```{r QB, echo=FALSE}
+CN<- read.csv("Cam Newton.csv")
+CNdf<- as.data.frame(CN)
+```
+
+```{r, echo=FALSE}
+library(plotly)
+
+plot_ly(CNdf, x= ~Def.Rank.Yds,y= ~PassYds, text = ~paste("Passing Yards: ", PassYds, "Defense Rank:", Def.Rank.Yds), color = ~Def.Rank.Yds, size = ~Def.Rank.Yds
+)
+```
+
+

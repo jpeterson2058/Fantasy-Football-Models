@@ -1,0 +1,974 @@
+---
+title: "Fantasy Football Team"
+author: "Joshua Peterson"
+date: "9/21/2016"
+output: word_document
+---
+Player analysis and selection for the week of 09.19.2016
+
+```{r Points, echo=FALSE}
+ydsPts<- 1/10
+tdPts<- 7
+```
+
+QB Analysis - Pull Player Data
+```{r QB, echo=FALSE}
+CN<- read.csv("Cam Newton.csv")
+CNdf<- as.data.frame(CN)
+
+AL<- read.csv("Andrew_Luck_2016.csv")
+ALdf<- as.data.frame(AL)
+```
+
+RB Analysis - Pull Player Data
+```{r RB, echo=FALSE}
+LB<- read.csv("Blount_2016.csv")
+LBdf<- as.data.frame(LB)
+
+CJ<- read.csv("Anderson_2016.csv")
+CJdf<- as.data.frame(CJ)
+
+FG<- read.csv("Gore_2016.csv")
+FGdf<- as.data.frame(FG)
+
+CH<- read.csv("Hyde_2016.csv")
+CHdf<- as.data.frame(CH)
+```
+
+# QB Analysis
+
+## Cam Newton - Summary Passing Data
+
+Newton Yards Summary
+```{r Newton Passing, echo=FALSE}
+summary(CNdf$Yds)
+summary(CNdf$TD)
+sd(CNdf$Yds)
+sd(CNdf$TD)
+
+```
+
+Newton Histogram of Yards and TDs
+```{r Newton Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(CNdf$Yds,col="blue",breaks=100)
+hist(CNdf$TD,col="blue",breaks=100)
+```
+
+Newton Yards LSE
+```{r Newton LSE, echo=FALSE}
+  hist(CNdf$Yds,col="blue",breaks=100, main = "Histogram of Newton Yds/Game",xlab = "Yards/Game")
+  CNmeanYds <- mean(CNdf$Yds)
+  lines(rep(CNmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+
+
+
+
+Newton Yards Fitting a linear model using opponent data
+```{r}
+CNfitYds<- lm(Yds ~ Opp, data = CNdf)
+summary(CNfitYds)$coefficients
+```
+The intercept is the expected yardage (currently 365 yards).  According to the model, for the current week with the opponent being Atlanta, Cam's yardage would be 142 yards less than the intercept (223 yards) with a SE of 48.6 yards (high 272 yards, low 176 yards)
+
+Newton Yards Plot of Data Yards against opponents
+```{r, echo=FALSE}
+CNgYdsplotOpp<- ggplot(CNdf, aes(x=Yds, y=Opp))
+CNgYdsplotOpp=CNgYdsplotOpp + xlab(Yards)
+CNgYdsplotOpp=CNgYdsplotOpp + ylab(Opponent)
+CNgYdsplotOpp=CNgYdsplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+CNgYdsplotOpp=CNgYdsplotOpp + geom_smooth(method = "lm", colour = "black")
+CNgYdsplotOpp
+```
+
+Newton Yards Fitting a linear model using location data
+```{r}
+CNfitYds2<- lm(Yds ~ Location, data = CNdf)
+summary(CNfit2)$coefficients
+```
+The intercept is the expexcted yardage (281 yards).  According to the model, we should expect a 9 yard increase when playing at home with a SE of 14 yards (high + 23 yards, low - 5 yards).  Cam will be playing Away this week.
+
+Newton Plot of Data Yards against Location
+```{r, echo=FALSE}
+CNgYdsplotLoc<- ggplot(CNdf, aes(x=Yds, y=Location))
+CNgYdsplotLoc=CNgYdsplotLoc + xlab(Yards)
+CNgYdsplotLoc=CNgYdsplotLoc + ylab(Location)
+CNgYdsplotLoc=CNgYdsplotLoc + geom_point(size = 7, colour = "black", alpha = 0.2)
+CNgYdsplotLoc=CNgYdsplotLoc + geom_smooth(method = "lm", colour = "black")
+CNgYdsplotLoc
+```
+
+Newton Residuals - Yards vs. Opponent
+```{r, echo=FALSE}
+CNyOpp <- CNdf$Yds; CNxOpp <- CNdf$Opp; CNnOpp <- length(CNyOpp)
+CNfitOpp<- lm(CNyOpp ~ CNxOpp)
+CNfitOpp
+CNresidOpp<- resid(CNfitOpp)
+CNyhatOpp<- predict(CNfitOpp)
+max(abs(CNresidOpp-(CNyOpp - CNyhatOpp)))
+plot(CNdf$Yds, CNdf$Opp,  
+     xlab = "Yards", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(CNfitOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(CNxOpp[i], CNxOpp[i]), c(CNyOpp[i], CNyhatOpp[i]), col = "red" , lwd = 2)
+```
+
+Newton Residuals - Yards vs. Location
+```{r, echo=FALSE}
+CNyLoc <- CNdf$Yds; CNxLoc <- CNdf$Location; CNnOpp <- length(CNyLoc)
+CNfitLoc<- lm(CNyLoc ~ CNxLoc)
+CNfitLoc
+CNresidLoc<- resid(CNfitLoc)
+CNyhatLoc- predict(CNfitLoc)
+max(abs(CNresidLoc-(CNyLoc - CNyhatLoc)))
+plot(CNdf$Yds, CNdf$Location,  
+     xlab = "Yards", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(CNfit, lwd = 2)
+for (i in 1 : n) 
+  lines(c(CNxLoc[i], CNxLoc[i]), c(CNyLoc[i], CNyhatLoc[i]), col = "red" , lwd = 2)
+```
+
+Newton Yards Opponent Residual Variation
+```{r, echo=FALSE}
+summary(CNfitOpp)$sigma
+```
+
+Newton Yards Location Residual Variation
+```{r, echo=FALSE}
+summary(CNfitLoc)$sigma
+```
+
+Newton Yards Training Sets
+```{r, echo=FALSE}
+CNinTrain <- createDataPartition(y=CNdf$Yds,
+                              p=0.7, list=FALSE)
+CNtraining <- CNdf[inTrain,]; CNtesting <- CNdf[-inTrain,]
+dim(CNtraining); dim(CNtesting)
+```
+
+Newton Plot Yards vs. Location
+```{r, echo=FALSE}
+qplot(Yds,Location,colour=Location,data=CNdf)
+```
+
+Newton Plot Yards vs. Opponent
+```{r, echo=FALSE}
+qplot(Yds,Opp,colour=Opp,data=CNdf)
+```
+
+Newton Yards Fit a linear model
+```{r, echo=FALSE}
+CNmodYdsFit<- train(Yds ~ Location + Opp,
+               method = "lm",data=CNdf)
+CNfinYdsMod <- CNmodYdsFit$finalModel
+print(CNfinYdsMod)
+```
+
+Newton Yards Diagnostics
+```{r, echo=FALSE}
+plot(CNfinYdsMod,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Newton Yards Plot by index
+```{r, echo=FALSE}
+plot(CNfinMod$residuals,pch=19)
+```
+
+Newton Yards Predicted Values vs. Opponents
+```{r, echo=FALSE}
+CNpred <- predict(CNmodFit, CNtesting)
+qplot(Yds,CNpred,colour=Opp,data=CNtesting)
+```
+
+## Cam Newton - Summary TD Data
+
+Newton TD Fitting a linear model using opponent data
+```{r}
+CNfitTd<- lm(Opp ~ I(TD - mean(TD)), data = CNdf)
+coef(CNfitTd)
+summary(CNfitTd)$coefficients
+```
+The intercept is the expected number of games (16).  According to the model, Cam scores 0.65 TD's/game
+
+Newton Plot of Data TD against opponents
+```{r, echo=FALSE}
+CNgTdplotOpp<- ggplot(CNdf, aes(x=TD, y=Opp))
+CNgTdsplotOpp=CNgTdsplotOpp + xlab(TDs)
+CNgTdplotOpp=CNgTdplotOpp + ylab(Opponent)
+CNgTdplotOpp=CNgTdplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+CNgTdplotOpp=CNgTdplotOpp + geom_smooth(method = "lm", colour = "black")
+CNgTdplotOpp
+```
+
+Newton TD Fitting a linear model using location data
+```{r}
+CNfitTd2<- lm(TD ~ Location, data = CNdf)
+summary(CNfitTd2)$coefficients
+```
+The intercept is the expexcted TDs (1.43).  According to the model, we should expect a 0.16 in TDs increase when playing at home with a SE of 0.26 TDs (high + 1.67 TDs, low - 1.27 TDs).  Cam will be playing Away this week.
+
+Newton Residuals - TDs vs. Opponent
+```{r, echo=FALSE}
+CNyTdOpp <- CNdf$TD; CNxTdOpp <- CNdf$Opp; CNnTdOpp <- length(CNyTdOpp)
+CNfitTdOpp<- lm(CNyTdOpp ~ CNxTdOpp)
+CNfitTdOpp
+CNresidTdOpp<- resid(CNfitTdOpp)
+CNyhatTdOpp<- predict(CNfitTdOpp)
+max(abs(CNresidTdOpp-(CNyTdOpp - CNyhatTdOpp)))
+plot(CNdf$TD, CNdf$Opp,  
+     xlab = "TDs", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(CNfitTdOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(CNxTdOpp[i], CNxTdOpp[i]), c(CNyTdOpp[i], CNyhatTdOpp[i]), col = "red" , lwd = 2)
+```
+
+Newton Residuals - TDs vs. Location
+```{r, echo=FALSE}
+CNyTdLoc <- CNdf$TD; CNxTdLoc <- CNdf$Location; CNnTdOpp <- length(CNyTdLoc)
+CNfitTdLoc<- lm(CNyTdLoc ~ CNxTdLoc)
+CNfitTdLoc
+CNresidTdLoc<- resid(CNfitTdLoc)
+CNyhatTdLoc- predict(CNfitTdLoc)
+max(abs(CNresidTdLoc-(CNyTdLoc - CNyhatTdLoc)))
+plot(CNdf$TD, CNdf$Location,  
+     xlab = "TDs", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(CNfitTdLoc, lwd = 2)
+for (i in 1 : n) 
+  lines(c(CNxTdLoc[i], CNxTdLoc[i]), c(CNyTdLoc[i], CNyhatTdLoc[i]), col = "red" , lwd = 2)
+```
+
+Newton TD Opponent Residual Variation
+```{r, echo=FALSE}
+summary(CNfitTdOpp)$sigma
+```
+
+Newton TD Location Residual Variation
+```{r, echo=FALSE}
+summary(CNfitTdLoc)$sigma
+```
+
+Newton TD Training Sets
+```{r, echo=FALSE}
+CNTdinTrain <- createDataPartition(y=CNdf$TD,
+                              p=0.7, list=FALSE)
+CNTdtraining <- CNdf[inTrain,]; CNTdtesting <- CNdf[-inTrain,]
+dim(CNTdtraining); dim(CNTdtesting)
+```
+
+Newton Plot TDs vs. Location
+```{r, echo=FALSE}
+qplot(TD,Location,colour=Location,data=CNdf)
+```
+
+Newton Plot TDs vs. Opponent
+```{r, echo=FALSE}
+qplot(TD,Opp,colour=Opp,data=CNdf)
+```
+
+Newton TD Fit a linear model
+```{r, echo=FALSE}
+CNmodTdFit<- train(TD ~ Location + Opp,
+               method = "lm",data=CNdf)
+CNTdModFit <- CNmodTdFit$finalModel
+print(CNTdModFit)
+```
+
+Newton TD Diagnostics
+```{r, echo=FALSE}
+plot(CNTdModFit,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Newton TD Plot by index
+```{r, echo=FALSE}
+plot(CNTdModFit$residuals,pch=19)
+```
+
+Newton TD Prediction vs. Opponent and Location
+```{r,echo=FALSE}
+CNTdpred <- predict(CNmodTdFit, CNTdtesting)
+qplot(TD,CNTdpred,colour=Opp,data=CNTdtesting)
+```
+
+# Andrew Luck - Summary Passing & TD Data
+
+```{r Luck Passing, echo=FALSE}
+summary(ALdf$Yds)
+summary(ALdf$TD)
+sd(ALdf$Yds)
+sd(ALdf$TD)
+```
+
+Luck Histogram of Yards and TDs
+```{r Luck Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(ALdf$Yds,col="blue",breaks=100)
+hist(ALdf$TD,col="blue",breaks=100)
+```
+
+Luck - Least square estimate
+```{r Luck LSE, echo=FALSE}
+  hist(ALdf$Yds,col="blue",breaks=100, main = "Histogram of Luck Yds/Game",xlab = "Yards/Game")
+  ALmeanYds <- mean(ALdf$Yds)
+  lines(rep(ALmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+```
+
+Luck Yards Fitting a linear model using opponent data
+```{r}
+ALfitYds<- lm(Yds ~ Opp, data = ALdf)
+summary(ALfitYds)$coefficients
+```
+The intercept is the expected yardage (currently 163 yards).  According to the model, for the current week with the opponent being JAX, Luck's yardage would be 121 yards more than the intercept (284 yards) with a SE of 68 yards (high 352 yards, low 216 yards)
+
+Luck Yards Plot of Data Yards against opponents
+```{r, echo=FALSE}
+ALgYdsplotOpp<- ggplot(ALdf, aes(x=Yds, y=Opp))
+ALgYdsplotOpp=ALgYdsplotOpp + xlab(Yards)
+ALgYdsplotOpp=ALgYdsplotOpp + ylab(Opponent)
+ALgYdsplotOpp=ALgYdsplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+ALgYdsplotOpp=ALgYdsplotOpp + geom_smooth(method = "lm", colour = "black")
+ALgYdsplotOpp
+```
+
+Luck Yards Fitting a linear model using location data
+```{r}
+ALfitYds2<- lm(Yds ~ Location, data = ALdf)
+summary(ALfitYds2)$coefficients
+```
+The intercept is the expexcted yardage (265 yards).  According to the model, we should expect a 9.5 yard increase when playing at home with a SE of 20 yards (high + 29.5 yards, low 10.5 yards).  Luck will be playing Away this week.
+
+Luck Plot of Data Yards against Location
+```{r, echo=FALSE}
+ALgYdsplotLoc<- ggplot(ALdf, aes(x=Yds, y=Location))
+ALgYdsplotLoc=ALgYdsplotLoc + xlab(Yards)
+ALgYdsplotLoc=ALgYdsplotLoc + ylab(Location)
+ALgYdsplotLoc=ALgYdsplotLoc + geom_point(size = 7, colour = "black", alpha = 0.2)
+ALgYdsplotLoc=ALgYdsplotLoc + geom_smooth(method = "lm", colour = "black")
+ALgYdsplotLoc
+```
+
+Luck Residuals - Yards vs. Opponent
+```{r, echo=FALSE}
+ALyOpp <- ALdf$Yds; ALxOpp <- ALdf$Opp; ALnOpp <- length(ALyOpp)
+ALfitOpp<- lm(ALyOpp ~ ALxOpp)
+ALfitOpp
+ALresidOpp<- resid(ALfitOpp)
+ALyhatOpp<- predict(ALfitOpp)
+max(abs(ALresidOpp-(ALyOpp - ALyhatOpp)))
+plot(ALdf$Yds, ALdf$Opp,  
+     xlab = "Yards", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfitOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxOpp[i], ALxOpp[i]), c(ALyOpp[i], ALyhatOpp[i]), col = "red" , lwd = 2)
+```
+
+Luck Residuals - Yards vs. Location
+```{r, echo=FALSE}
+ALyLoc <- ALdf$Yds; ALxLoc <- ALdf$Location; ALnOpp <- length(ALyLoc)
+ALfitLoc<- lm(ALyLoc ~ ALxLoc)
+ALfitLoc
+ALresidLoc<- resid(ALfitLoc)
+ALyhatLoc- predict(ALfitLoc)
+max(abs(ALresidLoc-(ALyLoc - ALyhatLoc)))
+plot(ALdf$Yds, ALdf$Location,  
+     xlab = "Yards", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfit, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxLoc[i], ALxLoc[i]), c(ALyLoc[i], ALyhatLoc[i]), col = "red" , lwd = 2)
+```
+
+Luck Yards Opponent Residual Variation
+```{r, echo=FALSE}
+summary(ALfitOpp)$sigma
+```
+
+Luck Yards Location Residual Variation
+```{r, echo=FALSE}
+summary(ALfitLoc)$sigma
+```
+
+Luck Yards Training Sets
+```{r, echo=FALSE}
+ALinTrain <- createDataPartition(y=ALdf$Yds,
+                              p=0.7, list=FALSE)
+ALtraining <- ALdf[ALinTrain,]; ALtesting <- ALdf[-ALinTrain,]
+dim(ALtraining); dim(ALtesting)
+```
+
+Luck Plot Yards vs. Location
+```{r, echo=FALSE}
+qplot(Yds,Location,colour=Location,data=ALdf)
+```
+
+Luck Plot Yards vs. Opponent
+```{r, echo=FALSE}
+qplot(Yds,Opp,colour=Opp,data=ALdf)
+```
+
+Luck Yards Fit a linear model
+```{r, echo=FALSE}
+ALmodYdsFit<- train(Yds ~ Location + Opp,
+               method = "lm",data=ALdf)
+ALfinYdsMod <- ALmodYdsFit$finalModel
+print(ALfinYdsMod)
+```
+
+Luck Yards Diagnostics
+```{r, echo=FALSE}
+plot(ALfinYdsMod,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Luck Yards Plot by index
+```{r, echo=FALSE}
+plot(ALfinYdsMod$residuals,pch=19)
+```
+
+Luck Yards Predicted Values vs. Opponents
+```{r, echo=FALSE}
+ALpred <- predict(ALmodYdsFit, ALtesting)
+qplot(Yds,ALpred,colour=Opp,data=ALtesting)
+```
+
+## Andrew Luck - Summary TD Data
+
+Luck TD Fitting a linear model using opponent data
+```{r}
+ALfitTd<- lm(Opp ~ TD), data = ALdf)
+coef(ALfitTd)
+summary(ALfitTd)$coefficients
+```
+The intercept is the expected number of games (15).  According to the model, the opponent has no direct affect on Luck's TD's/game
+
+Luck Plot of Data TD against opponents
+```{r, echo=FALSE}
+ALgTdplotOpp<- ggplot(ALdf, aes(x=TD, y=Opp))
+ALgTdsplotOpp=ALgTdsplotOpp + xlab(TDs)
+ALgTdplotOpp=ALgTdplotOpp + ylab(Opponent)
+ALgTdplotOpp=ALgTdplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+ALgTdplotOpp=ALgTdplotOpp + geom_smooth(method = "lm", colour = "black")
+ALgTdplotOpp
+```
+
+Luck TD Fitting a linear model using location data
+```{r}
+ALfitTd2<- lm(TD ~ Location, data = ALdf)
+summary(ALfitTd2)$coefficients
+```
+The intercept is the expexcted TDs (1.75).  According to the model, we should expect a 0.21 in TDs increase when playing at home with a SE of 0.32 TDs (high + 2.07 TDs, low - 1.54 TDs).  Cam will be playing Away this week.
+
+Luck Residuals - TDs vs. Opponent
+```{r, echo=FALSE}
+ALyTdOpp <- ALdf$TD; ALxTdOpp <- ALdf$Opp; ALnTdOpp <- length(ALyTdOpp)
+ALfitTdOpp<- lm(ALyTdOpp ~ ALxTdOpp)
+ALfitTdOpp
+ALresidTdOpp<- resid(ALfitTdOpp)
+ALyhatTdOpp<- predict(ALfitTdOpp)
+max(abs(ALresidTdOpp-(ALyTdOpp - ALyhatTdOpp)))
+plot(ALdf$TD, ALdf$Opp,  
+     xlab = "TDs", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfitTdOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxTdOpp[i], ALxTdOpp[i]), c(ALyTdOpp[i], ALyhatTdOpp[i]), col = "red" , lwd = 2)
+```
+
+Luck Residuals - TDs vs. Location
+```{r, echo=FALSE}
+ALyTdLoc <- ALdf$TD; ALxTdLoc <- ALdf$Location; ALnTdOpp <- length(ALyTdLoc)
+ALfitTdLoc<- lm(ALyTdLoc ~ ALxTdLoc)
+ALfitTdLoc
+ALresidTdLoc<- resid(ALfitTdLoc)
+ALyhatTdLoc- predict(ALfitTdLoc)
+max(abs(ALresidTdLoc-(ALyTdLoc - ALyhatTdLoc)))
+plot(ALdf$TD, ALdf$Location,  
+     xlab = "TDs", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfitTdLoc, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxTdLoc[i], ALxTdLoc[i]), c(ALyTdLoc[i], ALyhatTdLoc[i]), col = "red" , lwd = 2)
+```
+
+Luck TD Opponent Residual Variation
+```{r, echo=FALSE}
+summary(ALfitTdOpp)$sigma
+```
+
+Newton TD Location Residual Variation
+```{r, echo=FALSE}
+summary(ALfitTdLoc)$sigma
+```
+
+Luck TD Training Sets
+```{r, echo=FALSE}
+ALTdinTrain <- createDataPartition(y=ALdf$TD,
+                              p=0.7, list=FALSE)
+ALTdtraining <- ALdf[ALTdinTrain,]; ALTdtesting <- ALdf[-ALTdinTrain,]
+dim(ALTdtraining); dim(ALTdtesting)
+```
+
+Luck Plot TDs vs. Location
+```{r, echo=FALSE}
+qplot(TD,Location,colour=Location,data=ALdf)
+```
+
+Luck Plot TDs vs. Opponent
+```{r, echo=FALSE}
+qplot(TD,Opp,colour=Opp,data=ALdf)
+```
+
+Luck TD Fit a linear model
+```{r, echo=FALSE}
+ALmodTdFit<- train(TD ~ Location + Opp,
+               method = "lm",data=ALdf)
+ALTdModFit <- ALmodTdFit$finalModel
+print(ALTdModFit)
+```
+
+Luck TD Diagnostics
+```{r, echo=FALSE}
+plot(ALTdModFit,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Luck TD Plot by index
+```{r, echo=FALSE}
+plot(ALTdModFit$residuals,pch=19)
+```
+
+Luck TD Prediction vs. Opponent and Location
+```{r,echo=FALSE}
+ALTdpred <- predict(ALmodTdFit, ALTdtesting)
+qplot(TD,ALTdpred,colour=Opp,data=ALTdtesting)
+```
+
+
+# RB Analysis
+
+Blount - Summary Rushing TD Data
+
+```{r Blount Rushing, echo=FALSE}
+summary(LBdf$Yds)
+summary(LBdf$TD)
+sd(LBdf$Yds)
+sd(LBdf$TD)
+```
+
+Blount - Histogram of Yards and TDs
+
+```{r Blount Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(LBdf$Yds,col="blue",breaks=100, main = "Histogram of Blount Yds/Game", xlab="Yds/Game")
+hist(LBdf$TD,col="blue",breaks=100, main = "Histogram of Blount Tds/Game", xlab="Tds/Game")
+```
+
+Blount - Least square estimate
+
+```{r Blount LSE, echo=FALSE}
+hist(LBdf$Yds,col="blue",breaks=100, main = "Histogram of Blount w/LSE Yds/Game",xlab = "Yards/Game")
+LBmeanYds <- mean(LBdf$Yds)
+lines(rep(LBmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+Blount Yards Fitting a linear model using opponent data
+```{r}
+LBfitYds<- lm(Yds ~ Opp, data = LBdf)
+summary(LBfitYds)$coefficients
+```
+The intercept is the expected yardage (currently 95 yards).  According to the model, for the current week with the opponent being BUF, Blount's yardage would be 30 yards less than the intercept (95 yards) with a SE of 34 yards (high 129 yards, low 61 yards)
+
+Blount Yards Plot of Data Yards against opponents
+```{r, echo=FALSE}
+LBgYdsplotOpp<- ggplot(LBdf, aes(x=Yds, y=Opp))
+LBgYdsplotOpp=LBgYdsplotOpp + xlab(Yards)
+LBgYdsplotOpp=LBgYdsplotOpp + ylab(Opponent)
+LBgYdsplotOpp=LBgYdsplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+LBgYdsplotOpp=LBgYdsplotOpp + geom_smooth(method = "lm", colour = "black")
+LBgYdsplotOpp
+```
+
+Blount Yards Fitting a linear model using location data
+```{r}
+LBfitYds2<- lm(Yds ~ Location, data = LBdf)
+summary(LBfitYds2)$coefficients
+```
+The intercept is the expexcted yardage (50 yards).  According to the model, we should expect a 3.5 yard increase when playing at home with a SE of 9 yards.   Blount will be playing Home this week.
+
+Blount Residuals - Yards vs. Opponent
+```{r, echo=FALSE}
+LByOpp <- LBdf$Yds; LBxOpp <- LBdf$Opp; LBnOpp <- length(LByOpp)
+LBfitOpp<- lm(LByOpp ~ LBxOpp)
+LBfitOpp
+LBresidOpp<- resid(LBfitOpp)
+LByhatOpp<- predict(LBfitOpp)
+max(abs(LBresidOpp-(LByOpp - LByhatOpp)))
+plot(LBdf$Yds, LBdf$Opp,  
+     xlab = "Yards", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(LBfitOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(LBxOpp[i], LBxOpp[i]), c(LByOpp[i], LByhatOpp[i]), col = "red" , lwd = 2)
+```
+
+Blount Residuals - Yards vs. Location
+```{r, echo=FALSE}
+LByLoc <- LBdf$Yds; LBxLoc <- LBdf$Location; LBnOpp <- length(LByLoc)
+LBfitLoc<- lm(LByLoc ~ LBxLoc)
+LBfitLoc
+LBresidLoc<- resid(LBfitLoc)
+LByhatLoc- predict(LBfitLoc)
+max(abs(LBresidLoc-(LByLoc - LByhatLoc)))
+plot(LBdf$Yds, LBdf$Location,  
+     xlab = "Yards", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(LBfit, lwd = 2)
+for (i in 1 : n) 
+  lines(c(LBxLoc[i], LBxLoc[i]), c(LByLoc[i], LByhatLoc[i]), col = "red" , lwd = 2)
+```
+
+Blount Yards Opponent Residual Variation
+```{r, echo=FALSE}
+summary(LBfitOpp)$sigma
+```
+
+Blount Yards Location Residual Variation
+```{r, echo=FALSE}
+summary(LBfitLoc)$sigma
+```
+
+Blount Yards Training Sets
+```{r, echo=FALSE}
+LBinTrain <- createDataPartition(y=LBdf$Yds,
+                              p=0.7, list=FALSE)
+LBtraining <- LBdf[inTrain,]; LBtesting <- LBdf[-inTrain,]
+dim(LBtraining); dim(LBtesting)
+```
+
+Blount Plot Yards vs. Location
+```{r, echo=FALSE}
+qplot(Yds,Location,colour=Location,data=LBdf)
+```
+
+Blount Plot Yards vs. Opponent
+```{r, echo=FALSE}
+qplot(Yds,Opp,colour=Opp,data=LBdf)
+```
+
+Blount Yards Fit a linear model
+```{r, echo=FALSE}
+LBmodYdsFit<- train(Yds ~ Location + Opp,
+               method = "glm", data = LBdf)
+LBfinYdsMod <- LBmodYdsFit$finalModel
+print(LBfinYdsMod)
+```
+
+Blount Yards Diagnostics
+```{r, echo=FALSE}
+plot(LBfinYdsMod,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Blount Yards Plot by index
+```{r, echo=FALSE}
+plot(LBfinYdsMod$residuals,pch=19)
+```
+
+Blount Yards Predicted Values vs. Opponents
+```{r, echo=FALSE}
+LBpred <- predict(LBfinYdsMod, LBtesting)
+qplot(Yds,LBpred,colour=Opp,data=LBtesting)
+```
+
+## Blount - Summary TD Data
+
+Blount TD Fitting a linear model using opponent data
+```{r}
+LBfitTd<- lm(TD ~ Opp), data = LBdf
+coef(LBfitTd)
+summary(LBfitTd)$coefficients
+```
+The intercept is the expected number of games (15).  According to the model, the opponent has no direct affect on Luck's TD's/game
+
+Luck Plot of Data TD against opponents
+```{r, echo=FALSE}
+ALgTdplotOpp<- ggplot(ALdf, aes(x=TD, y=Opp))
+ALgTdsplotOpp=ALgTdsplotOpp + xlab(TDs)
+ALgTdplotOpp=ALgTdplotOpp + ylab(Opponent)
+ALgTdplotOpp=ALgTdplotOpp + geom_point(size = 7, colour = "black", alpha = 0.2)
+ALgTdplotOpp=ALgTdplotOpp + geom_smooth(method = "lm", colour = "black")
+ALgTdplotOpp
+```
+
+Luck TD Fitting a linear model using location data
+```{r}
+ALfitTd2<- lm(TD ~ Location, data = ALdf)
+summary(ALfitTd2)$coefficients
+```
+The intercept is the expexcted TDs (1.75).  According to the model, we should expect a 0.21 in TDs increase when playing at home with a SE of 0.32 TDs (high + 2.07 TDs, low - 1.54 TDs).  Cam will be playing Away this week.
+
+Luck Residuals - TDs vs. Opponent
+```{r, echo=FALSE}
+ALyTdOpp <- ALdf$TD; ALxTdOpp <- ALdf$Opp; ALnTdOpp <- length(ALyTdOpp)
+ALfitTdOpp<- lm(ALyTdOpp ~ ALxTdOpp)
+ALfitTdOpp
+ALresidTdOpp<- resid(ALfitTdOpp)
+ALyhatTdOpp<- predict(ALfitTdOpp)
+max(abs(ALresidTdOpp-(ALyTdOpp - ALyhatTdOpp)))
+plot(ALdf$TD, ALdf$Opp,  
+     xlab = "TDs", 
+     ylab = "Opponent", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfitTdOpp, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxTdOpp[i], ALxTdOpp[i]), c(ALyTdOpp[i], ALyhatTdOpp[i]), col = "red" , lwd = 2)
+```
+
+Luck Residuals - TDs vs. Location
+```{r, echo=FALSE}
+ALyTdLoc <- ALdf$TD; ALxTdLoc <- ALdf$Location; ALnTdOpp <- length(ALyTdLoc)
+ALfitTdLoc<- lm(ALyTdLoc ~ ALxTdLoc)
+ALfitTdLoc
+ALresidTdLoc<- resid(ALfitTdLoc)
+ALyhatTdLoc- predict(ALfitTdLoc)
+max(abs(ALresidTdLoc-(ALyTdLoc - ALyhatTdLoc)))
+plot(ALdf$TD, ALdf$Location,  
+     xlab = "TDs", 
+     ylab = "Location", 
+     bg = "lightblue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(ALfitTdLoc, lwd = 2)
+for (i in 1 : n) 
+  lines(c(ALxTdLoc[i], ALxTdLoc[i]), c(ALyTdLoc[i], ALyhatTdLoc[i]), col = "red" , lwd = 2)
+```
+
+Luck TD Opponent Residual Variation
+```{r, echo=FALSE}
+summary(ALfitTdOpp)$sigma
+```
+
+Newton TD Location Residual Variation
+```{r, echo=FALSE}
+summary(ALfitTdLoc)$sigma
+```
+
+Luck TD Training Sets
+```{r, echo=FALSE}
+ALTdinTrain <- createDataPartition(y=ALdf$TD,
+                              p=0.7, list=FALSE)
+ALTdtraining <- ALdf[ALTdinTrain,]; ALTdtesting <- ALdf[-ALTdinTrain,]
+dim(ALTdtraining); dim(ALTdtesting)
+```
+
+Luck Plot TDs vs. Location
+```{r, echo=FALSE}
+qplot(TD,Location,colour=Location,data=ALdf)
+```
+
+Luck Plot TDs vs. Opponent
+```{r, echo=FALSE}
+qplot(TD,Opp,colour=Opp,data=ALdf)
+```
+
+Luck TD Fit a linear model
+```{r, echo=FALSE}
+ALmodTdFit<- train(TD ~ Location + Opp,
+               method = "lm",data=ALdf)
+ALTdModFit <- ALmodTdFit$finalModel
+print(ALTdModFit)
+```
+
+Luck TD Diagnostics
+```{r, echo=FALSE}
+plot(ALTdModFit,1,pch=19,cex=0.5,col="#00000010")
+```
+
+Luck TD Plot by index
+```{r, echo=FALSE}
+plot(ALTdModFit$residuals,pch=19)
+```
+
+Luck TD Prediction vs. Opponent and Location
+```{r,echo=FALSE}
+ALTdpred <- predict(ALmodTdFit, ALTdtesting)
+qplot(TD,ALTdpred,colour=Opp,data=ALTdtesting)
+```
+
+
+## Anderson - Summary Rushing TD Data
+
+```{r Anderson Rushing, echo=FALSE}
+summary(CJdf$Yds)
+summary(CJdf$TD)
+sd(CJdf$Yds)
+sd(CJdf$TD)
+```
+
+## Gore - Summary Rushing TD Data
+
+```{r Gore Rushing, echo=FALSE}
+summary(FGdf$Yds)
+summary(FGdf$TD)
+sd(FGdf$Yds)
+sd(FGdf$TD)
+```
+
+## Hyde - Summary Rushing TD Data
+
+```{r Hyde Rushing, echo=FALSE}
+summary(CHdf$Yds)
+summary(CHdf$TD)
+sd(CHdf$Yds)
+sd(CHdf$TD)
+```
+
+## Blount - Histogram of Yards and TDs
+
+```{r Blount Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(LBdf$Yds,col="blue",breaks=100, main = "Histogram of Blount Yds/Game", xlab="Yds/Game")
+hist(LBdf$TD,col="blue",breaks=100, main = "Histogram of Blount Tds/Game", xlab="Tds/Game")
+```
+
+## Anderson - Histogram of Yards and TDs
+
+```{r Anderson Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(CJdf$Yds,col="blue",breaks=100, main = "Histogram of Anderson Yds/Game", xlab="Yds/Game")
+hist(CJdf$TD,col="blue",breaks=100, main = "Histogram of Anderson Tds/Game", xlab="Tds/Game")
+```
+
+## Gore - Histogram of Yards and TDs
+
+```{r Gore Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(FGdf$Yds,col="blue",breaks=100, main = "Histogram of Gore Yds/Game", xlab="Yds/Game")
+hist(FGdf$TD,col="blue",breaks=100, main = "Histogram of Gore Tds/Game", xlab="Tds/Game")
+```
+
+## Hyde - Histogram of Yards and TDs
+
+```{r Hyde Histogram, echo=FALSE}
+par(mfrow=c(1,2))
+hist(CHdf$Yds,col="blue",breaks=100, main = "Histogram of Hyde Yds/Game", xlab="Yds/Game")
+hist(CHdf$TD,col="blue",breaks=100, main = "Histogram of Hyde Tds/Game", xlab="Tds/Game")
+```
+
+## Blount - Least square estimate
+
+```{r Blount LSE, echo=FALSE}
+hist(LBdf$Yds,col="blue",breaks=100, main = "Histogram of Blount w/LSE Yds/Game",xlab = "Yards/Game")
+LBmeanYds <- mean(LBdf$Yds)
+lines(rep(LBmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+## Anderson - Least square estimate
+
+```{r Anderson LSE, echo=FALSE}
+hist(CJdf$Yds,col="blue",breaks=100, main = "Histogram of Anderson w/LSE Yds/Game",xlab = "Yards/Game")
+CJmeanYds <- mean(CJdf$Yds)
+lines(rep(CJmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+## Gore - Least square estimate
+
+```{r Gore LSE, echo=FALSE}
+hist(FGdf$Yds,col="blue",breaks=100, main = "Histogram of Gore w/LSE Yds/Game",xlab = "Yards/Game")
+FGmeanYds <- mean(FGdf$Yds)
+lines(rep(FGmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+## Hyde - Least square estimate
+
+```{r Hyde LSE, echo=FALSE}
+hist(CHdf$Yds,col="blue",breaks=100, main = "Histogram of Hyde w/LSE Yds/Game",xlab = "Yards/Game")
+CHmeanYds <- mean(CHdf$Yds)
+lines(rep(CHmeanYds,100),seq(0,150,length=100),col="red",lwd=5)
+
+```
+
+## Blount - Current Opponent Analysis (Rushing only)
+
+```{r Blount Opponent, echo=FALSE}
+LBCurrOpp<- LBdf[c(20,52,63,84),]
+LBAvgYds<-mean(LBCurrOpp$Yds)
+LBAvgTd<-mean(LBCurrOpp$TD)
+LBYdsPts<- LBAvgYds*ydsPts
+LBYdsPts
+LBTdPts<- LBAvgTd*tdPts
+LBTdPts
+LBYdsPts+LBTdPts
+```
+
+## Anderson - Current Opponent Analysis (Rushing only)
+
+```{r Anderson Opponenet, echo=FALSE}
+CJCurrOpp<- CJdf[c(19,34),]
+CJAvgYds<-mean(CJCurrOpp$Yds)
+CJAvgTd<-mean(CJCurrOpp$TD)
+CJYdsPts<- CJAvgYds*ydsPts
+CJYdsPts
+CJTdPts<- CJAvgTd*tdPts
+CJTdPts
+CJYdsPts+CJTdPts
+```
+
+## Gore - Current Opponent Analysis (Rushing only)
+
+```{r Gore Opponent, echo=FALSE}
+FGCurrOpp<- FGdf[c(20,147),]
+FGAvgYds<-mean(FGCurrOpp$Yds)
+FGAvgTd<-mean(FGCurrOpp$TD)
+FGYdsPts<- FGAvgYds*ydsPts
+FGYdsPts
+FGTdPts<- FGAvgTd*tdPts
+FGTdPts
+FGYdsPts+FGTdPts
+```
+
+## Hyde - Current Opponent Analysis (Rushing only)
+
+```{r Hyde Opponent, echo=FALSE}
+CHCurrOpp<- CHdf[c(14,14,21),]
+CHAvgYds<-mean(CHCurrOpp$Yds)
+CHAvgTd<-mean(CHCurrOpp$TD)
+CHYdsPts<- CHAvgYds*ydsPts
+CHYdsPts
+CHTdPts<- FGAvgTd*tdPts
+CHTdPts
+CHYdsPts+CHTdPts
+```
+
+```{r, echo=FALSE}
+knit("Fantasy Team_2016.Rmd")
+```
+

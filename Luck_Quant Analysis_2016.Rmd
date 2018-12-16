@@ -1,0 +1,668 @@
+---
+title: "Fantasy Player Analysis - Andrew Luck"
+author: "Joshua Peterson"
+date: "11/4/2016"
+output: html_document
+---
+
+Player analysis and selection for the week of 11.4.2016
+
+```{r, echo=FALSE}
+PassydsPts<- 1/25
+PasstdPts<- 4
+Int<- -2
+RushydsPts<- 1/10
+RushtdPts<- 6
+```
+
+QB Analysis - Pull Player Data
+```{r, echo=FALSE, comment= "", message=FALSE}
+library(readr)
+AL <- read_csv("~/Fantasy-Football-Models/Andrew_Luck_2016.csv")
+ALdf<- as.data.frame(AL)
+```
+
+# QB Analysis
+
+## Luck - Summary Passing Data
+
+Luck Yards Summary
+```{r, echo=FALSE, comment="", message=FALSE}
+summary(ALdf)
+```
+
+## Fitting models
+
+### Distribution of Pass Yards
+
+Plotting a normal distribution curve (Pass Yards)
+```{r, echo=FALSE, comment= "", message=FALSE}
+x<- ALdf$PassYds
+NMPass<- hist(ALdf$PassYds, breaks = 20, col="red")
+xfit<- seq(min(x), max(x), length=40)
+yfit<- dnorm(xfit, mean = mean(x), sd=sd(x))
+yfit<- yfit*diff(NMPass$mids[1:2])*length(x)
+lines(xfit, yfit, col="blue", lwd=2)
+```
+
+Skew
+```{r, echo=FALSE, comment= "", message=FALSE}
+skewness(x)
+```
+
+Kurtosis
+```{r, echo=FALSE, comment= "", message=FALSE}
+kurtosis(x)
+```
+
+Data does not appear to fall along the normal, possibly double exponential distribution curve.  We can see evidence of left leaning skew and slightly negative kurtoctic.
+
+Standard deviation of Pass Yds
+```{r, echo=FALSE, comment= "", message=FALSE}
+sd(ALdf$PassYds)
+```
+
+Plotting an emperical cumulative distribution curve (Pass Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+x.normPass<- rnorm(n=62, m=270.8, sd=75.35)
+plot(density(x.normPass), main="Density estimate of data")
+
+plot.ecdf(x.normPass, main = "Empirical cumulative distribution curve", xlab = "Passing Yards")
+```
+
+Summary of Density Estimate (Pass Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+density(x.normPass)
+```
+
+Shape of the density estimate data curve suggests normal distribution.
+
+Passing Yards Quantile-Quantile (Q-Q) plot (Pass Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+z.normPass<- x.normPass-mean(x.normPass)/sd(x.normPass)
+qqnorm(z.normPass)
+abline(265,75)
+```
+
+## Conclusion
+
+After running the series of model tests, it is assumed that a normal distribution model for Pass Yards will be the best model fit.
+
+### Distribution of Rush Yards
+
+Plotting a normal distribution curve (Pass Yards)
+```{r, echo=FALSE, comment= "", message=FALSE}
+y<- ALdf$RushYds
+NMRush<- hist(ALdf$RushYds, breaks = 20, col="red")
+xfit<- seq(min(y), max(y), length=40)
+yfit<- dnorm(xfit, mean = mean(y), sd=sd(y))
+yfit<- yfit*diff(NMRush$mids[1:2])*length(y)
+lines(xfit, yfit, col="blue", lwd=2)
+```
+
+Skew
+```{r, echo=FALSE, comment= "", message=FALSE}
+skewness(y)
+```
+
+Kurtosis
+```{r, echo=FALSE, comment= "", message=FALSE}
+kurtosis(y)
+```
+
+Data shows a bit more skewness (0.21) vs. Pass Yards (0.14).  Distribution falls between norman and double exponential distributions.  Distribution is flat as evidenced by the slightly negative kurtosis of the curve.
+
+Plotting an emperical cumulative distribution curve (Rush Yds)
+
+Standard deviation (Rush Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+sd(ALdf$RushYds)
+```
+
+```{r, echo=FALSE, comment= "", message=FALSE}
+x.normRush<- rnorm(n=62, m=20.18, sd=12.50)
+plot(density(x.normRush), main="Density estimate of data")
+
+plot.ecdf(x.normRush, main = "Empirical cumulative distribution curve", xlab = "Rushing Yards")
+```
+
+Summary of Density Estimate (Rush Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+density(x.normRush)
+```
+
+Shape of the density estimate data curve suggests normal distribution.
+
+Passing Yards Quantile-Quantile (Q-Q) plot (Pass Yds)
+```{r, echo=FALSE, comment= "", message=FALSE}
+z.normRush<- x.normRush-mean(x.normRush)/sd(x.normRush)
+qqnorm(z.normRush)
+abline(19,11)
+```
+
+## Conclusion
+
+After running the series of model tests, it is assumed that a normal distribution model for Rush Yards will be the best model fit.
+
+## Exploratory data analysis
+
+Location analysis (Pass Yards and Rush Yards)
+```{r, echo=FALSE, comment= "", message=FALSE}
+
+plot_ly(ALdf, x= ~Location, y= ~PassYds, type = 'box', name = "Pass Yards") %>%
+  add_trace(y = ~RushYds, name = "RushYds") %>%
+  layout(yaxis = list(title = "Yards"), barmode = "group")
+
+```
+
+### Location analysis (TDs and Interceptions)
+
+```{r, echo=FALSE, comment= "", message=FALSE}
+
+plot_ly(ALdf, x= ~Location, y= ~PassTD, type = 'box', name = "Pass TDs") %>%
+  add_trace(y = ~RushTd, name = "Rush TDs") %>%
+  add_trace(y = ~Int, name = "Interceptions") %>%
+  layout(yaxis = list(title = "Number"), barmode = "group")
+
+```
+
+
+
+### Opponent Analysis
+
+Opponent vs. Pass Yards
+```{r, echo=FALSE, comment="", message=FALSE}
+par(mfrow = c(5,1), mar = c(4,4,1,1))
+plot_ly(ALdf, x = ~Opp, y = ~PassYds, type = "box")
+plot_ly(ALdf, x = ~Opp, y = ~RushYds, type = "box")
+plot_ly(ALdf, x = ~Opp, y = ~PassTD, type = "box")
+plot_ly(ALdf, x = ~Opp, y = ~RushTd, type = "box")
+plot_ly(ALdf, x = ~Opp, y = ~Int, type = "box")
+```
+
+### Conference Game Analysis
+
+Conference analysis (Pass Yards and Rush Yards)
+```{r, echo=FALSE, comment="", message=FALSE}
+
+plot_ly(ALdf, x= ~ConfGame, y= ~PassYds, type = 'bar', name = "Pass Yards") %>%
+  add_trace(y = ~RushYds, name = "RushYds") %>%
+  layout(yaxis = list(title = "Yards"), barmode = "group")
+
+```
+
+Conference analysis (TDs and Interceptions)
+```{r, echo=FALSE, comment="", message=FALSE}
+
+plot_ly(ALdf, x= ~ConfGame, y= ~PassTD, type = 'bar', name = "Pass TDs") %>%
+  add_trace(y = ~RushTd, name = "Rush TDs") %>%
+  add_trace(y = ~Int, name = "Interceptions") %>%
+  layout(yaxis = list(title = "Number"), barmode = "group")
+
+```
+
+### Defensive Ranking Analysis
+
+Defense rank vs. Pass Yards
+```{r, echo=FALSE, message=FALSE, comment=""}
+library(ggplot2)
+par(mfrow = c(5,2), mar = c(4,4,1,1))
+plot1<-qplot(Def.Rank.Yds,PassYds, data = ALdf) + geom_smooth(method = "lm")
+plot2<-qplot(Def.Rank.Yds, RushYds, data = ALdf) + geom_smooth(method = "lm")
+plot3<-qplot(Def.Rank.Yds, PassTD, data = ALdf) + geom_smooth(method = "lm")
+plot4<-qplot(Def.Rank.Yds, RushTd, data = ALdf) + geom_smooth(method = "lm")
+plot5<-qplot(Def.Rank.Yds, Int, data = ALdf) + geom_smooth(method = "lm")
+
+(g1<- ggplotly(plot1))
+(g2<- ggplotly(plot2))
+(g3<- ggplotly(plot3))
+(g4<- ggplotly(plot4))
+(g5<- ggplotly(plot5))
+```
+
+Luck Yards LSE
+```{r, echo=FALSE, comment="", message=FALSE}
+par(mfrow = c(3,2), mar = c(4,4,2,1))
+hist(ALdf$PassYds,col="blue",breaks=15, main = "Histogram of Luck Pass Yds/Game",xlab = "Yards/Game")
+hist(ALdf$RushYds,col="red",breaks=15, main = "Histogram of Luck Rush Yds/Game",xlab = "Yards/Game")  
+hist(ALdf$PassTD,col="purple",breaks=5, main = "Histogram of Luck Pass TDs/Game",xlab = "TDs/Game")
+hist(ALdf$RushTd,col="grey",breaks=5, main = "Histogram of Luck Rush TDs/Game",xlab = "TDs/Game")
+hist(ALdf$Int,col="grey",breaks=5, main = "Histogram of Luck Interceptions/Game",xlab = "Interceptions/Game")
+```
+
+## Linear model fitting
+
+### Model fitting vs. Location
+
+Pass Yds vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassYdsLoc<- lm(PassYds ~ Location, data = ALdf)
+summary(ALfitPassYdsLoc)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Home", data=ALdf)
+LocLmPredictPy<- head(predict(ALfitPassYdsLoc, CurrLoc, interval="predict"),1)
+LocLmPredictPy
+```
+
+
+
+Rush Yds. vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushYdsLoc<- lm(RushYds ~ Location, data = ALdf)
+summary(ALfitRushYdsLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Home", data=ALdf)
+LocLmPredictRy<- head(predict(ALfitRushYdsLoc, CurrLoc, interval="predict"),1)
+LocLmPredictRy
+```
+
+Pass TDs. vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassTDLoc<- lm(PassTD ~ Location, data = ALdf)
+summary(ALfitPassTDLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Home", data=ALdf)
+LocLmPredictPt<- head(predict(ALfitPassTDLoc, CurrLoc, interval="predict"),1)
+LocLmPredictPt
+```
+
+Rush TDs vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushTDLoc<- lm(RushTd ~ Location, data = ALdf)
+summary(ALfitRushTDLoc)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Home", data=ALdf)
+LocLmPredictRt<- head(predict(ALfitRushTDLoc, CurrLoc, interval="predict"),1)
+LocLmPredictRt
+```
+
+
+#### Model fitting vs. opponent
+
+Pass Yards vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassYds<- lm(PassYds ~ Opp, data = ALdf)
+summary(ALfitPassYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="TEN", data=ALdf)
+OppLmPredictPy<- head(predict(ALfitPassYds, CurrOpp, interval="predict"),1)
+OppLmPredictPy
+```
+
+Rush Yards vs. opponent data
+
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushYds<- lm(RushYds ~ Opp, data = ALdf)
+summary(ALfitRushYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="TEN", data=ALdf)
+OppLmPredictRy<- head(predict(ALfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRy
+```
+
+Pass TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassTD<- lm(PassTD ~ Opp, data = ALdf)
+summary(ALfitPassTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="TEN", data=ALdf)
+OppLmPredictPt<- head(predict(ALfitPassTD, CurrOpp, interval="predict"))
+OppLmPredictPt
+```
+
+Rush TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushTD<- lm(RushTd ~ Opp, data = ALdf)
+summary(ALfitRushTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="TEN", data=ALdf)
+OppLmPredictRt<- head(predict(ALfitRushTD, CurrOpp, interval="predict"))
+OppLmPredictRt
+```
+
+Interceptions vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitInt<- lm(Int ~ Opp, data = ALdf)
+summary(ALfitInt)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="TEN", data=ALdf)
+OppLmPredictInt<- head(predict(ALfitInt, CurrOpp, interval="predict"))
+OppLmPredictInt
+```
+
+#### Model fitting vs. Conference Game
+
+Pass Yards vs. conference data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassYds<- lm(PassYds ~ ConfGame, data = ALdf)
+summary(ALfitPassYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="Conf", data=ALdf)
+OppLmPredictPy<- head(predict(ALfitPassYds, CurrOpp, interval="predict"))
+OppLmPredictPy
+```
+
+Rush Yards vs. opponent data
+
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushYds<- lm(RushYds ~ Conf, data = ALdf)
+summary(ALfitRushYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="Conf", data=ALdf)
+OppLmPredictRy<- head(predict(ALfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRy
+```
+
+Pass TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassTD<- lm(PassTD ~ ConfGame, data = ALdf)
+summary(ALfitPassTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictPt<- head(predict(ALfitPassTD, CurrOpp, interval="predict"))
+OppLmPredictPt
+```
+
+Rush TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushTD<- lm(RushTd ~ ConfGame, data = ALdf)
+summary(ALfitRushTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictRt<- head(predict(ALfitRushTD, CurrOpp, interval="predict"))
+OppLmPredictRt
+```
+
+Interceptions vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitInt<- lm(Int ~ ConfGame, data = ALdf)
+summary(ALfitInt)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictInt<- head(predict(ALfitInt, CurrOpp, interval="predict"))
+OppLmPredictInt
+```
+
+### Model fitting vs. defensive rank
+
+Pass Yards vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassYdsRnk<- lm(PassYds ~ Def.Rank.Yds, data = ALdf)
+summary(ALfitPassYdsRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=17, data=ALdf)
+RankLmPredictPy<- head(predict(ALfitPassYdsRnk, CurrRank, interval="predict"),1)
+RankLmPredictPy
+```
+
+Rush Yards vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushYdsRnk<- lm(RushYds ~ Def.Rank.Yds, data = ALdf)
+summary(ALfitRushYdsRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=17, data=ALdf)
+RankLmPredictRy<- head(predict(ALfitRushYdsRnk, CurrRank, interval="predict"))
+RankLmPredictRy
+```
+
+Pass TDs vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassTDRnk<- lm(PassTD ~ Def.Rank.Yds, data = ALdf)
+summary(ALfitPassTDRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=17, data=ALdf)
+RankLmPredictPt<- head(predict(ALfitPassTDRnk, CurrRank, interval="predict"))
+RankLmPredictPt
+```
+
+Rush TDs vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushTDRnk<- lm(RushTd ~ Def.Rank.Yds, data = ALdf)
+summary(ALfitRushTDRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=17, data=ALdf)
+RankLmPredictRt<- head(predict(ALfitRushTDRnk, CurrRank, interval="predict"),1)
+RankLmPredictRt
+```
+
+Interceptions vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitIntRnk<- lm(Int ~ Def.Rank.Yds, data = ALdf)
+summary(ALfitIntRnk)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=17, data=ALdf)
+RankLmPredictInt<- head(predict(ALfitIntRnk, CurrRank, interval="predict"),1)
+RankLmPredictInt
+```
+
+## Machine Learning Alogorithm (Pass Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE, comment="", message=FALSE}
+library(caret)
+library(lattice)
+
+summary(ALdf)
+inTrain <- createDataPartition(y=ALdf$PassYds,p=0.60, list=FALSE)
+training <- ALdf[inTrain,]
+testing <- ALdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+## K-Fold Cross Validation
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r, echo=FALSE, comment="", message=FALSE}
+set.seed(32323)
+Passfolds <- createFolds(y=ALdf$PassYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+## Machine learning alogorithm decisioning
+
+First I wanted to determine the optimal machine learning model to use.  The first test I used the Decision Tree approach.  I followed up by testing the Random Forest approach.
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE, comment="", message=FALSE}
+library(rpart)
+modelFitPass <- rpart(PassYds ~ Def.Rank.Yds, data = ALdf, method = "anova")
+```
+
+Next, construct a Decision Tree graph
+```{r, echo=FALSE, comment="", message=FALSE}
+fancyRpartPlot(modelFitPass)
+```
+
+## Machine Learning Alogorithm (Rush Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE, comment="", message=FALSE}
+summary(ALdf)
+inTrain <- createDataPartition(y=ALdf$RushYds,p=0.60, list=FALSE)
+training <- ALdf[inTrain,]
+testing <- ALdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r, echo=FALSE, comment="", message=FALSE}
+set.seed(32323)
+Passfolds <- createFolds(y=ALdf$RushYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+Decision tree model fit Rush Yards Defense Rank.
+```{r, echo=FALSE, comment="", message=FALSE}
+modelFitRush <- rpart(RushYds ~ Def.Rank.Yds, data = ALdf, method = "anova")
+```
+
+Pass Yards decision tree graph
+```{r, echo=FALSE, comment="", message=FALSE}
+fancyRpartPlot(modelFitRush)
+```
+
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE, comment="", message=FALSE}
+modelFitPass <- rpart(RushYds ~ Def.Rank.Yds, data = ALdf, method = "anova")
+```
+
+### Output from Decision Tree Model vs. Yards Passing
+
+Current week (11) opponent Tennessee Titans.  The defense is currently ranked # 17 according to www.pro-football-reference.com.
+
+According to the model, there is a 16% chance that Luck will pass for 313 yards.  This takes in to account defense rank ONLY.  There is an 24.0% chance Luck will rush for 17 yards.  Once again this takes in to account defense rank ONLY.
+
+We will now use the LM model for prediction (Pass Yds)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = PassYds ~ Opp+Def.Rank.Yds+Location+ConfGame, data = ALdf)
+currdata = data.frame(Opp="TEN",Def.Rank.Yds=17,Location="Home",ConfGame="Conf",data=ALdf)
+pass_predict_final<- head(predict(lmModel, currdata),1)
+pass_predict_final
+```
+
+Predicted passing points
+```{r, echo=FALSE, comment="", message=FALSE}
+PassPts<-pass_predict_final*PassydsPts
+PassPts
+```
+
+We will now use the LM model for prediction (Rush Yds)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RushYds ~ Opp+Def.Rank.Yds+Location+ConfGame, data = ALdf)
+currdata = data.frame(Opp="TEN", Def.Rank.Yds=17, Location="Home", ConfGame="Conf",data=ALdf)
+rush_predict_final<- head(predict(lmModel, currdata),1)
+rush_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE, comment="", message=FALSE}
+RushPts<-rush_predict_final*RushydsPts
+RushPts
+```
+
+We will now use the LM model for prediction (Pass TDs)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = PassTD ~ Opp+Def.Rank.Yds+Location+ConfGame, data = ALdf)
+currdata = data.frame(Opp="TEN", Def.Rank.Yds=17, Location="Home", ConfGame="Conf",data=ALdf)
+passTd_predict_final<- head(predict(lmModel, currdata),1)
+passTd_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE, comment="", message=FALSE}
+TdPassPts<-passTd_predict_final*PasstdPts
+TdPassPts
+```
+
+We will now use the LM model for prediction (Rush TDs)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RushTd ~ Opp+Def.Rank.Yds+Location+ConfGame, data = ALdf)
+currdata = data.frame(Opp="TEN", Def.Rank.Yds=17, Location="Home", ConfGame="Conf",data=ALdf)
+rushTd_predict_final<- head(predict(lmModel, currdata),1)
+rushTd_predict_final
+```
+
+Predicted rushing TD points
+```{r, echo=FALSE, comment="", message=FALSE}
+TdRushPts<-rushTd_predict_final*RushtdPts
+TdRushPts
+```
+
+We will now use the LM model for prediction (Interceptions)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = Int ~ Opp+Def.Rank.Yds+Location+ConfGame, data = ALdf)
+currdata = data.frame(Opp="TEN", Def.Rank.Yds=17, Location="Home", ConfGame="Conf",data=ALdf)
+Int_predict_final<- head(predict(lmModel, currdata),1)
+Int_predict_final
+```
+
+Predicted rushing TD points
+```{r, echo=FALSE, comment="", message=FALSE}
+IntPts<-Int_predict_final*Int
+IntPts
+```
+
+Total predicted points using linear regression models
+```{r, echo=FALSE, comment="", message=FALSE}
+CNTotalPer<- PassPts+RushPts+TdPassPts+TdRushPts+IntPts
+CNTotalPer
+```
+
+Outcome:  Andrew Luck's predicted point total for Week 11 against the Tennessee Titans is 17.57 points.  NFL.com is predicting that Luck's point total will be 16.22 points
+
+```{r, echo=FALSE, comment="", message=FALSE}
+library(knitr)
+knit("Luck_Quant Analysis_2016.Rmd")
+```

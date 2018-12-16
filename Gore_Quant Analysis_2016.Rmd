@@ -1,0 +1,513 @@
+---
+title: "Fantasy Player Analysis - Frank Gore"
+author: "Joshua Peterson"
+date: "11/6/2016"
+output: html_document
+---
+
+Player analysis and selection for the week of 11.4.2016
+
+```{r, echo=FALSE}
+
+RushydsPts<- 1/10
+RushtdPts<- 6
+RecydsPts<- 1/10
+RectdPts<- 6
+
+```
+
+QB Analysis - Pull Player Data
+```{r, echo=FALSE, comment= "", message=FALSE}
+library(readr)
+FG <- read_csv("~/Fantasy-Football-Models/Gore_2016.csv")
+FGdf<- as.data.frame(FG)
+```
+
+# QB Analysis
+
+## Luck - Summary Passing Data
+
+Luck Yards Summary
+```{r, echo=FALSE, comment="", message=FALSE}
+summary(FGdf)
+```
+
+## Exploratory data analysis
+
+Location analysis (Pass Yards and Rush Yards)
+```{r, echo=FALSE, comment= "", message=FALSE}
+
+plot_ly(FGdf, x= ~Location, y= ~RushYds, type = 'box', name = "Rush Yards") %>%
+  layout(yaxis = list(title = "Yards"), barmode = "group")
+
+plot_ly(FGdf, x= ~Location, y= ~RecYds, type = 'box', name = "Rec Yards") %>%
+  layout(yaxis = list(title = "Yards"), barmode = "group")
+
+```
+
+### Location analysis (TDs and Interceptions)
+
+```{r, echo=FALSE, comment= "", message=FALSE}
+
+plot_ly(FGdf, x= ~Location, y= ~RushTD, type = 'box', name = "Rush TDs") %>%
+  layout(yaxis = list(title = "Number"), barmode = "group")
+  
+plot_ly(FGdf, x= ~Location, y= ~RecTD, type = 'box', name = "Rec TDs") %>%
+  layout(yaxis = list(title = "Number"), barmode = "group")
+
+```
+
+### Opponent Analysis
+
+Opponent vs. Pass Yards
+```{r, echo=FALSE, comment="", message=FALSE}
+par(mfrow = c(5,1), mar = c(4,4,1,1))
+plot_ly(FGdf, x = ~Opp, y = ~RushYds, type = "box")
+plot_ly(FGdf, x = ~Opp, y = ~RecYds, type = "box")
+
+```
+
+### Conference Game Analysis
+
+Conference analysis (Pass Yards and Rush Yards)
+```{r, echo=FALSE, comment="", message=FALSE}
+
+plot_ly(ALdf, x= ~ConfGame, y= ~PassYds, type = 'bar', name = "Pass Yards") %>%
+  add_trace(y = ~RushYds, name = "RushYds") %>%
+  layout(yaxis = list(title = "Yards"), barmode = "group")
+
+```
+
+Conference analysis (TDs and Interceptions)
+```{r, echo=FALSE, comment="", message=FALSE}
+
+plot_ly(ALdf, x= ~ConfGame, y= ~PassTD, type = 'bar', name = "Pass TDs") %>%
+  add_trace(y = ~RushTd, name = "Rush TDs") %>%
+  add_trace(y = ~Int, name = "Interceptions") %>%
+  layout(yaxis = list(title = "Number"), barmode = "group")
+
+```
+
+### Defensive Ranking Analysis
+
+Defense rank vs. Pass Yards
+```{r, echo=FALSE, message=FALSE, comment=""}
+library(ggplot2)
+par(mfrow = c(5,2), mar = c(4,4,1,1))
+plot1<-qplot(Def.Rank.Yds,RushYds, data = FGdf) + geom_smooth(method = "lm")
+plot2<-qplot(Def.Rank.Yds, RecYds, data = FGdf) + geom_smooth(method = "lm")
+
+(g1<- ggplotly(plot1))
+(g2<- ggplotly(plot2))
+
+```
+
+Gore Yards LSE
+```{r, echo=FALSE, comment="", message=FALSE}
+par(mfrow = c(3,2), mar = c(4,4,2,1))
+hist(FGdf$RushYds,col="blue",breaks=100, main = "Histogram of Gore Rush Yds/Game",xlab = "Pass Yds/Game")
+hist(FGdf$RecYds,col="red",breaks=100, main = "Histogram of Gore Receiving Yds/Game",xlab = "Yards/Game")  
+hist(FGdf$RushTD,col="purple",breaks=100, main = "Histogram of Gore Rush TDs/Game",xlab = "TDs/Game")
+hist(FGdf$RecTD,col="grey",breaks=100, main = "Histogram of Gore Receiving TDs/Game",xlab = "TDs/Game")
+
+```
+
+## Linear model fitting
+
+### Model fitting vs. Location
+
+Rush Yds vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushYdsLoc<- lm(RushYds ~ Location, data = FGdf)
+summary(FGfitRushYdsLoc)
+
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Away", data=FGdf)
+LocLmPredictRy<- head(predict(FGfitRushYdsLoc, CurrLoc, interval="predict"))
+LocLmPredictRy
+```
+
+Receiving Yds. vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRecYdsLoc<- lm(RecYds ~ Location, data = FGdf)
+summary(FGfitRecYdsLoc)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Away", data=FGdf)
+LocLmPredictRy<- head(predict(FGfitRecYdsLoc, CurrLoc, interval="predict"))
+LocLmPredictRy
+```
+
+Rush TDs. vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushTDLoc<- lm(RushTD ~ Location, data = FGdf)
+summary(FGfitRushTDLoc)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Away", data=FGdf)
+LocLmPredictRuTd<- head(predict(FGfitRushTDLoc, CurrLoc, interval="predict"))
+LocLmPredictRuTd
+```
+
+Recieving TDs vs. Location
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRecTDLoc<- lm(RecTD ~ Location, data = FGdf)
+summary(FGfitRecTDLoc)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrLoc<- data.frame(Location="Away", data=FGdf)
+LocLmPredictRecTd<- head(predict(FGfitRecTDLoc, CurrLoc, interval="predict"))
+LocLmPredictRecTd
+```
+
+
+#### Model fitting vs. opponent
+
+Rush Yards vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushYds<- lm(RushYds ~ Opp, data = FGdf)
+summary(FGfitRushYds)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="GNB", data=FGdf)
+OppLmPredictRuy<- head(predict(FGfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRuy
+```
+
+Recieving Yards vs. opponent data
+
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushYds<- lm(RecYds ~ Opp, data = FGdf)
+summary(FGfitRushYds)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="GNB", data=FGdf)
+OppLmPredictRecy<- head(predict(FGfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRecy
+```
+
+Rush TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushTD<- lm(RushTD ~ Opp, data = FGdf)
+summary(FGfitRushTD)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="GNB", data=FGdf)
+OppLmPredictRut<- head(predict(FGfitRushTD, CurrOpp, interval="predict"))
+OppLmPredictRut
+```
+
+Recieving TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRecTD<- lm(RecTD ~ Opp, data = FGdf)
+summary(FGfitRecTD)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(Opp="GNB", data=FGdf)
+OppLmPredictRect<- head(predict(FGfitRecTD, CurrOpp, interval="predict"))
+OppLmPredictRect
+```
+
+#### Model fitting vs. Conference Game
+
+Pass Yards vs. conference data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassYds<- lm(PassYds ~ ConfGame, data = ALdf)
+summary(ALfitPassYds)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictPy<- head(predict(ALfitPassYds, CurrOpp, interval="predict"))
+OppLmPredictPy
+```
+
+Rush Yards vs. opponent data
+
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushYds<- lm(RushYds ~ ConfGame, data = ALdf)
+summary(ALfitRushYds)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictRy<- head(predict(ALfitRushYds, CurrOpp, interval="predict"))
+OppLmPredictRy
+```
+
+Pass TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitPassTD<- lm(PassTD ~ ConfGame, data = ALdf)
+summary(ALfitPassTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictPt<- head(predict(ALfitPassTD, CurrOpp, interval="predict"))
+OppLmPredictPt
+```
+
+Rush TDs vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRushTD<- lm(RushTd ~ ConfGame, data = ALdf)
+summary(ALfitRushTD)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictRt<- head(predict(ALfitRushTD, CurrOpp, interval="predict"))
+OppLmPredictRt
+```
+
+Interceptions vs. opponent data
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitInt<- lm(Int ~ ConfGame, data = ALdf)
+summary(ALfitInt)$coefficients
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrOpp<- data.frame(ConfGame="NonConf", data=ALdf)
+OppLmPredictInt<- head(predict(ALfitInt, CurrOpp, interval="predict"))
+OppLmPredictInt
+```
+
+### Model fitting vs. defensive rank
+
+Rush Yards vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushYdsRnk<- lm(RushYds ~ Def.Rank.Yds, data = FGdf)
+summary(FGfitRushYdsRnk)
+
+cor(FGdf$RushYds, FGdf$Def.Rank.Yds)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=8, data=FGdf)
+RankLmPredictRuy<- head(predict(FGfitRushYdsRnk, CurrRank, interval="predict"))
+RankLmPredictRuy
+```
+
+Recieving Yards vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRecYdsRnk<- lm(RecYds ~ Def.Rank.Yds, data = FGdf)
+summary(FGfitRecYdsRnk)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=8, data=FGdf)
+RankLmPredictRecy<- head(predict(FGfitRecYdsRnk, CurrRank, interval="predict"))
+RankLmPredictRecy
+```
+
+Rush TDs vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+FGfitRushTDRnk<- lm(RushTd ~ Def.Rank.Yds, data = ALdf)
+summary(FGfitRushTDRnk)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=8, data=FGdf)
+RankLmPredictRut<- head(predict(FGfitRushTDRnk, CurrRank, interval="predict"))
+RankLmPredictRut
+```
+
+Receiving TDs vs. Defensive Rank
+```{r, echo=FALSE, comment="", message=FALSE}
+ALfitRecTDRnk<- lm(RecTD ~ Def.Rank.Yds, data = FGdf)
+summary(ALfitRecTDRnk)
+```
+
+Prediction interval using a linear model
+```{r, echo=FALSE, comment="", message=FALSE}
+CurrRank<- data.frame(Def.Rank.Yds=8, data=FGdf)
+RankLmPredictRect<- head(predict(ALfitRecTDRnk, CurrRank, interval="predict"))
+RankLmPredictRect
+```
+
+## Machine Learning Alogorithm (Rush Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE, comment="", message=FALSE}
+library(caret)
+library(lattice)
+
+summary(FGdf)
+inTrain <- createDataPartition(y=FGdf$RushYds,p=0.60, list=FALSE)
+training <- FGdf[inTrain,]
+testing <- FGdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+## K-Fold Cross Validation
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r, echo=FALSE, comment="", message=FALSE}
+set.seed(32323)
+Passfolds <- createFolds(y=FGdf$RushYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+## Machine learning alogorithm decisioning
+
+First I wanted to determine the optimal machine learning model to use.  The first test I used the Decision Tree approach.  I followed up by testing the Random Forest approach.
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE, comment="", message=FALSE}
+library(rpart)
+modelFitRush <- rpart(RushYds ~ Def.Rank.Yds, data = FGdf, method = "anova")
+```
+
+Next, construct a Decision Tree graph
+```{r, echo=FALSE, comment="", message=FALSE}
+fancyRpartPlot(modelFitRush)
+```
+
+## Machine Learning Alogorithm (Rush Yards)
+
+### Data Splitting
+
+In this data splitting action, I am splitting the data into 60% training set and 40% testing set.
+```{r, echo=FALSE, comment="", message=FALSE}
+summary(FGdf)
+inTrain <- createDataPartition(y=FGdf$RecYds,p=0.60, list=FALSE)
+training <- FGdf[inTrain,]
+testing <- FGdf[-inTrain,]
+dim(training); dim(testing)
+```
+
+We will then use the K-Fold process to cross-validate the data by splitting the training set in to many, smaller data sets.
+
+Here, I am creating 10 folds and setting a random number seed of 32323 for the study. Each fold has approximately the same number of samples in it.
+```{r, echo=FALSE, comment="", message=FALSE}
+set.seed(32323)
+Passfolds <- createFolds(y=FGdf$RecYds,k=10,list=TRUE,returnTrain=TRUE)
+sapply(Passfolds,length)
+Passfolds[[1]][1:10]
+```
+
+Decision tree model fit Rush Yards Defense Rank.
+```{r, echo=FALSE, comment="", message=FALSE}
+modelFitRec <- rpart(RecYds ~ Def.Rank.Yds, data = FGdf, method = "anova")
+```
+
+Pass Yards decision tree graph
+```{r, echo=FALSE, comment="", message=FALSE}
+fancyRpartPlot(modelFitRec)
+```
+
+
+### Machine learning using Decision Trees
+
+The first task was to determine model fit.
+```{r, echo=FALSE, comment="", message=FALSE}
+modelFitPass <- rpart(RushYds ~ Def.Rank.Yds, data = ALdf, method = "anova")
+```
+
+### Output from Decision Tree Model vs. Yards Passing
+
+Current week (9) opponent Green Bay Packers.  The defense is currently ranked # 8 according to www.pro-football-reference.com.
+
+According to the model, there is a 27% chance that Gore will run for 63 yards.  This takes in to account defense rank ONLY.  There is an 42.0% chance Gore will have 14 receiving 24 yards.  Once again this takes in to account defense rank ONLY.
+
+We will now use the LM model for prediction (Rush Yds)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RushYds ~ Opp+Def.Rank.Yds+Location, data = FGdf)
+currdata = data.frame(Opp="GNB",Def.Rank.Yds=8,Location="Away",data=ALdf)
+rush_predict_final<- predict(lmModel, currdata)
+rush_predict_final
+```
+
+Predicted passing points
+```{r, echo=FALSE, comment="", message=FALSE}
+RushPts<-rush_predict_final*RushydsPts
+RushPts
+```
+
+We will now use the LM model for prediction (Receiving Yds)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RecYds ~ Opp+Def.Rank.Yds+Location, data = FGdf)
+currdata = data.frame(Opp="GNB", Def.Rank.Yds=7, Location="Away",data=FGdf)
+rec_predict_final<- predict(lmModel, currdata)
+rec_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE, comment="", message=FALSE}
+RecPts<-rec_predict_final*RecydsPts
+RecPts
+```
+
+We will now use the LM model for prediction (Rush TDs)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RushTD ~ Opp+Def.Rank.Yds+Location, data = FGdf)
+currdata = data.frame(Opp="GNB", Def.Rank.Yds=8, Location="Away",data=FGdf)
+RusTd_predict_final<- predict(lmModel, currdata)
+RusTd_predict_final
+```
+
+Predicted rushing points
+```{r, echo=FALSE, comment="", message=FALSE}
+TdRusPts<-RusTd_predict_final*RushtdPts
+TdRusPts
+```
+
+We will now use the LM model for prediction (Recieving TDs)
+```{r, echo=FALSE, comment="", message=FALSE}
+lmModel<- lm(formula = RecTD ~ Opp+Def.Rank.Yds+Location, data = FGdf)
+currdata = data.frame(Opp="GNB", Def.Rank.Yds=8, Location="Away",data=FGdf)
+recTd_predict_final<- predict(lmModel, currdata)
+recTd_predict_final
+```
+
+Predicted rushing TD points
+```{r, echo=FALSE, comment="", message=FALSE}
+TdRecPts<-recTd_predict_final*RectdPts
+TdRecPts
+```
+
+Total predicted points using linear regression models
+```{r, echo=FALSE, comment="", message=FALSE}
+FGTotalPer<- RushPts+RecPts+TdRushPts+TdRecPts
+FGTotalPer
+```
+
+Outcome:  Gore's predicted point total for Week 9 against the Green Bay Packers is 16.50 points.  NFL.com is predicting that Gore's point total will be 6.8 points.
+
+Actual points scored, 19.10 a 2.6 point delta than predicted.
+
+```{r, echo=FALSE, comment="", message=FALSE}
+library(knitr)
+knit("Gore_Quant Analysis_2016.Rmd")
+```

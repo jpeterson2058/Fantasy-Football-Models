@@ -44,6 +44,7 @@ plot(CNdf$Location, CNdf$PassTD, ylab = "Passing TDs", col = "green")
 plot(CNdf$Location, CNdf$RushTD, ylab = "Rushing TDs", col = "purple")
 plot(CNdf$Location, CNdf$Int, ylab = "Interceptions", col = "grey")
 
+
 ```
 
 ### Opponent Analysis
@@ -61,29 +62,32 @@ plot(CNdf$Opp, CNdf$Int, ylab = "Interceptions", xlab = "Opponent", col = "grey"
 ### Defensive Ranking Analysis
 
 Defense rank vs. Pass Yards
-```{r}
+```{r, echo=FALSE, message=FALSE, comment=""}
 library(ggplot2)
 par(mfrow = c(5,2), mar = c(4,4,1,1))
-qplot(Def.Rank.Yds,PassYds, data = CNdf) + geom_smooth(method = "lm")
-qplot(Def.Rank.Yds, RushYds, data = CNdf) + geom_smooth(method = "lm")
-qplot(Def.Rank.Yds, PassTD, data = CNdf) + geom_smooth(method = "lm")
-qplot(Def.Rank.Yds, RushTD, data = CNdf) + geom_smooth(method = "lm")
-qplot(Def.Rank.Yds, Int, data = CNdf) + geom_smooth(method = "lm")
+plot1<-qplot(Def.Rank.Yds,PassYds, data = CNdf) + geom_smooth(method = "lm")
+plot2<-qplot(Def.Rank.Yds, RushYds, data = CNdf) + geom_smooth(method = "lm")
+plot3<-qplot(Def.Rank.Yds, PassTD, data = CNdf) + geom_smooth(method = "lm")
+plot4<-qplot(Def.Rank.Yds, RushTD, data = CNdf) + geom_smooth(method = "lm")
+plot5<-qplot(Def.Rank.Yds, Int, data = CNdf) + geom_smooth(method = "lm")
+
+(g1<- ggplotly(plot1))
+(g2<- ggplotly(plot2))
+(g3<- ggplotly(plot3))
+(g4<- ggplotly(plot4))
+(g5<- ggplotly(plot5))
 ```
-
-
-
 
 
 
 Newton Yards LSE
 ```{r Newton LSE, echo=FALSE}
 par(mfrow = c(3,2), mar = c(4,4,2,1))
-hist(CNdf$PassYds,col="blue",breaks=100, main = "Histogram of Newton Pass Yds/Game",xlab = "Yards/Game")
-hist(CNdf$RushYds,col="red",breaks=100, main = "Histogram of Newton Rush Yds/Game",xlab = "Yards/Game")  
-hist(CNdf$PassTD,col="purple",breaks=100, main = "Histogram of Newton Pass TDs/Game",xlab = "TDs/Game")
-hist(CNdf$RushTD,col="grey",breaks=100, main = "Histogram of Newton Rush TDs/Game",xlab = "TDs/Game")
-hist(CNdf$Int,col="grey",breaks=100, main = "Histogram of Newton Interceptions/Game",xlab = "Interceptions/Game")
+hist(CNdf$PassYds,col="blue",breaks=15, main = "Histogram of Newton Pass Yds/Game",xlab = "Yards/Game")
+hist(CNdf$RushYds,col="red",breaks=15, main = "Histogram of Newton Rush Yds/Game",xlab = "Yards/Game")  
+hist(CNdf$PassTD,col="purple",breaks=5, main = "Histogram of Newton Pass TDs/Game",xlab = "TDs/Game")
+hist(CNdf$RushTD,col="grey",breaks=5, main = "Histogram of Newton Rush TDs/Game",xlab = "TDs/Game")
+hist(CNdf$Int,col="grey",breaks=5, main = "Histogram of Newton Interceptions/Game",xlab = "Interceptions/Game")
 ```
 
 
@@ -94,13 +98,13 @@ hist(CNdf$Int,col="grey",breaks=100, main = "Histogram of Newton Interceptions/G
 Pass Yds vs. Location
 ```{r, echo=FALSE}
 CNfitPassYdsLoc<- lm(PassYds ~ Location, data = CNdf)
-summary(CNfitPassYdsLoc)$coefficients
+summary(CNfitPassYdsLoc)
 ```
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrLoc<- data.frame(Location="Away", data=CNdf)
-LocLmPredictPy<- head(predict(CNfitPassYdsLoc, CurrLoc, interval="predict"))
+CurrLoc<- data.frame(Location="Home", data=CNdf)
+LocLmPredictPy<- head(predict(CNfitPassYdsLoc, CurrLoc, interval="predict"),1)
 LocLmPredictPy
 ```
 
@@ -114,8 +118,8 @@ summary(CNfitRushYdsLoc)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrLoc<- data.frame(Location="Away", data=CNdf)
-LocLmPredictRy<- head(predict(CNfitRushYdsLoc, CurrLoc, interval="predict"))
+CurrLoc<- data.frame(Location="Home", data=CNdf)
+LocLmPredictRy<- head(predict(CNfitRushYdsLoc, CurrLoc, interval="predict"),1)
 LocLmPredictRy
 ```
 
@@ -127,8 +131,8 @@ summary(CNfitPassTDLoc)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrLoc<- data.frame(Location="Away", data=CNdf)
-LocLmPredictPt<- head(predict(CNfitPassTDLoc, CurrLoc, interval="predict"))
+CurrLoc<- data.frame(Location="Home", data=CNdf)
+LocLmPredictPt<- head(predict(CNfitPassTDLoc, CurrLoc, interval="predict"),1)
 LocLmPredictPt
 ```
 
@@ -140,8 +144,8 @@ summary(CNfitRushTDLoc)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrLoc<- data.frame(Location="Away", data=CNdf)
-LocLmPredictRt<- head(predict(CNfitRushTDLoc, CurrLoc, interval="predict"))
+CurrLoc<- data.frame(Location="Home", data=CNdf)
+LocLmPredictRt<- head(predict(CNfitRushTDLoc, CurrLoc, interval="predict"),1)
 LocLmPredictRt
 ```
 
@@ -156,8 +160,8 @@ summary(CNfitPassYds)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrOpp<- data.frame(Opp="STL", data=CNdf)
-OppLmPredictPy<- head(predict(CNfitPassYds, CurrOpp, interval="predict"))
+CurrOpp<- data.frame(Opp="NOR", data=CNdf)
+OppLmPredictPy<- head(predict(CNfitPassYds, CurrOpp, interval="predict"),1)
 OppLmPredictPy
 ```
 
@@ -170,8 +174,8 @@ summary(CNfitRushYds)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrOpp<- data.frame(Opp="STL", data=CNdf)
-OppLmPredictRy<- head(predict(CNfitRushYds, CurrOpp, interval="predict"))
+CurrOpp<- data.frame(Opp="NOR", data=CNdf)
+OppLmPredictRy<- head(predict(CNfitRushYds, CurrOpp, interval="predict"),1)
 OppLmPredictRy
 ```
 
@@ -183,8 +187,8 @@ summary(CNfitPassTD)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrOpp<- data.frame(Opp="STL", data=CNdf)
-OppLmPredictPt<- head(predict(CNfitPassTD, CurrOpp, interval="predict"))
+CurrOpp<- data.frame(Opp="NOR", data=CNdf)
+OppLmPredictPt<- head(predict(CNfitPassTD, CurrOpp, interval="predict"),1)
 OppLmPredictPt
 ```
 
@@ -196,8 +200,8 @@ summary(CNfitRushTD)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrOpp<- data.frame(Opp="STL", data=CNdf)
-OppLmPredictRt<- head(predict(CNfitRushTD, CurrOpp, interval="predict"))
+CurrOpp<- data.frame(Opp="NOR", data=CNdf)
+OppLmPredictRt<- head(predict(CNfitRushTD, CurrOpp, interval="predict"),1)
 OppLmPredictRt
 ```
 
@@ -209,8 +213,8 @@ summary(CNfitInt)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrOpp<- data.frame(Opp="STL", data=CNdf)
-OppLmPredictInt<- head(predict(CNfitInt, CurrOpp, interval="predict"))
+CurrOpp<- data.frame(Opp="NOR", data=CNdf)
+OppLmPredictInt<- head(predict(CNfitInt, CurrOpp, interval="predict"),1)
 OppLmPredictInt
 ```
 
@@ -219,13 +223,13 @@ OppLmPredictInt
 Pass Yards vs. Defensive Rank
 ```{r, echo=FALSE}
 CNfitPassYdsRnk<- lm(PassYds ~ Def.Rank.Yds, data = CNdf)
-summary(CNfitPassYdsRnk)$coefficients
+summary(CNfitPassYdsRnk)
 ```
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
-RankLmPredictPy<- head(predict(CNfitPassYdsRnk, CurrRank, interval="predict"))
+CurrRank<- data.frame(Def.Rank.Yds=29, data=CNdf)
+RankLmPredictPy<- head(predict(CNfitPassYdsRnk, CurrRank, interval="predict"),1)
 RankLmPredictPy
 ```
 
@@ -237,8 +241,8 @@ summary(CNfitRushYdsRnk)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
-RankLmPredictRy<- head(predict(CNfitRushYdsRnk, CurrRank, interval="predict"))
+CurrRank<- data.frame(Def.Rank.Yds=29, data=CNdf)
+RankLmPredictRy<- head(predict(CNfitRushYdsRnk, CurrRank, interval="predict"),1)
 RankLmPredictRy
 ```
 
@@ -250,8 +254,8 @@ summary(CNfitPassTDRnk)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
-RankLmPredictPt<- head(predict(CNfitPassTDRnk, CurrRank, interval="predict"))
+CurrRank<- data.frame(Def.Rank.Yds=29, data=CNdf)
+RankLmPredictPt<- head(predict(CNfitPassTDRnk, CurrRank, interval="predict"),1)
 RankLmPredictPt
 ```
 
@@ -263,8 +267,8 @@ summary(CNfitRushTDRnk)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
-RankLmPredictRt<- head(predict(CNfitRushTDRnk, CurrRank, interval="predict"))
+CurrRank<- data.frame(Def.Rank.Yds=29, data=CNdf)
+RankLmPredictRt<- head(predict(CNfitRushTDRnk, CurrRank, interval="predict"),1)
 RankLmPredictRt
 ```
 
@@ -276,8 +280,8 @@ summary(CNfitIntRnk)$coefficients
 
 Prediction interval using a linear model
 ```{r, echo=FALSE}
-CurrRank<- data.frame(Def.Rank.Yds=10, data=CNdf)
-RankLmPredictInt<- head(predict(CNfitIntRnk, CurrRank, interval="predict"))
+CurrRank<- data.frame(Def.Rank.Yds=29, data=CNdf)
+RankLmPredictInt<- head(predict(CNfitIntRnk, CurrRank, interval="predict"),1)
 RankLmPredictInt
 ```
 
@@ -394,15 +398,15 @@ modelFitPass <- rpart(RushYds ~ Def.Rank.Yds, data = CNdf, method = "anova")
 
 ### Output from Decision Tree Model vs. Yards Passing
 
-Current week (9) opponent L.A. Rams (formerly St. Louis Rams).  The defense is currently ranked # 10 according to www.pro-football-reference.com.
+Current week (9) opponent New Orleans Saints.  The defense is currently ranked # 29 according to www.pro-football-reference.com.
 
-According to the model, there is a 60% chance that Cam Newton will pass for 240 yards.  This takes in to account defense rank ONLY.  There is an 18.0% chance Cam will rush for 25 yards.  Once again this takes in to account defense rank ONLY.
+According to the model, there is a 59% chance that Cam Newton will pass for 240 yards. This takes in to account defense rank ONLY.  There is an 14.0% chance Cam will rush for 52 yards.  Once again this takes in to account defense rank ONLY.
 
 We will now use the LM model for prediction (Pass Yds)
 ```{r, echo=FALSE}
 lmModel<- lm(formula = PassYds ~ Opp+Def.Rank.Yds+Location, data = CNdf)
-currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
-pass_predict_final<- predict(lmModel, currdata)
+currdata = data.frame(Opp="NOR", Def.Rank.Yds=29, Location="Home",data=CNdf)
+pass_predict_final<- head(predict(lmModel, currdata),1)
 pass_predict_final
 ```
 
@@ -415,8 +419,8 @@ PassPts
 We will now use the LM model for prediction (Rush Yds)
 ```{r, echo=FALSE}
 lmModel<- lm(formula = RushYds ~ Opp+Def.Rank.Yds+Location, data = CNdf)
-currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
-rush_predict_final<- predict(lmModel, currdata)
+currdata = data.frame(Opp="NOR", Def.Rank.Yds=29, Location="Home",data=CNdf)
+rush_predict_final<- head(predict(lmModel, currdata),1)
 rush_predict_final
 ```
 
@@ -429,8 +433,8 @@ RushPts
 We will now use the LM model for prediction (Pass TDs)
 ```{r, echo=FALSE}
 lmModel<- lm(formula = PassTD ~ Opp+Def.Rank.Yds+Location, data = CNdf)
-currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
-passTd_predict_final<- predict(lmModel, currdata)
+currdata = data.frame(Opp="NOR", Def.Rank.Yds=29, Location="Home",data=CNdf)
+passTd_predict_final<- head(predict(lmModel, currdata),1)
 passTd_predict_final
 ```
 
@@ -443,8 +447,8 @@ TdPassPts
 We will now use the LM model for prediction (Rush TDs)
 ```{r, echo=FALSE}
 lmModel<- lm(formula = RushTD ~ Opp+Def.Rank.Yds+Location, data = CNdf)
-currdata = data.frame(Opp="STL", Def.Rank.Yds=10, Location="Home",data=CNdf)
-rushTd_predict_final<- predict(lmModel, currdata)
+currdata = data.frame(Opp="NOR", Def.Rank.Yds=29, Location="Home",data=CNdf)
+rushTd_predict_final<- head(predict(lmModel, currdata),1)
 rushTd_predict_final
 ```
 
@@ -460,7 +464,7 @@ CNTotalPer<- PassPts+RushPts+TdPassPts+TdRushPts
 CNTotalPer
 ```
 
-Outcome:  Cam Newton's predicted point total for Week 9 against the LA Rams is 13.21 points.  NFL.com is predicting that Cam's point total will be 15.44 points
+Outcome:  Cam Newton's predicted point total for Week 11 against the New Orleans Saints is 24.47 points.  NFL.com is predicting that Cam's point total will be 17.86 points
 
 ```{r, echo=FALSE}
 library(knitr)
